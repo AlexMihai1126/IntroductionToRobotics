@@ -7,7 +7,7 @@ Task given by teacher: "Use a separate potentiometer for controlling each color 
 
 Only one .ino file was necessary to implement the task, found in the folder "Homework 1".
 
-Image of the setup: UPCOMING
+Image of the setup:(https://github.com/AlexMihai1126/IntroductionToRobotics/blob/67317ad8fd8e71dceb1ffa385d8b0d63d7c1d8ac/Homework%201/images/hw1_img1.jpg)https://github.com/AlexMihai1126/IntroductionToRobotics/blob/67317ad8fd8e71dceb1ffa385d8b0d63d7c1d8ac/Homework%201/images/hw1_img1.jpg
 
 Video of the setup in action: https://youtu.be/7HbvjDEhaHs
 
