@@ -10,3 +10,10 @@ Only one .ino file was necessary to implement the task, found in the folder "Hom
 Image of the setup: ![](https://github.com/AlexMihai1126/IntroductionToRobotics/blob/67317ad8fd8e71dceb1ffa385d8b0d63d7c1d8ac/Homework%201/images/hw1_img1.jpg)
 Video of the setup in action: https://youtu.be/7HbvjDEhaHs
 
+## Homework 2
+Task: "This assignment involves simulating a 3-floor elevator control system using LEDs, buttons, and a buzzer with Arduino. By the end of this task, you will gain experience in using button state change, implementing debouncing techniques, and coordinating multiple components to represent real-world scenarios. Design a control system that simulates a 3-floor elevator using the Arduino platform."
+
+Compoonents used: 4 LEDs (3 blue LEDs, one for each floor, and one yellow LED for indicating the elevator's state), 3 buttons, one for each floor to call the elevator, 4 330 ohm resistors, one for each LED, breadboard and necessary wires.
+
+Image of the setup: UPCOMING
+Video of the setup: UPCOMING
