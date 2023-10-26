@@ -5,9 +5,9 @@
 #define thirdFloorLED 9
 #define buzzer 3
 #define elevatorStateLED 10
-#define firstFloorBtn A0
-#define secondFloorBtn A1
-#define thirdFloorBtn A2
+#define firstFloorBtn 4
+#define secondFloorBtn 12
+#define thirdFloorBtn 13
 #define doorCloseTimer 1500
 #define moveTime 4500
 #define waitTime 2000
@@ -18,6 +18,9 @@ bool elevatorMoving = false;
 bool firstFloorBtnPressed=false;
 bool secondFloorBtnPressed=false;
 bool thirdFloorBtnPressed=false;
+bool elevatorLEDCurrentState = LOW;
+unsigned long prevMillis=0;
+const int elevatorLEDBlinkInterval=250;
 SimpleStack<int> floorStack(10);
 
 void floorIndicators(int floor) {
@@ -46,17 +49,28 @@ void floorIndicators(int floor) {
 }
 
 int elevatorState(int floor, bool isMoving) {
-  if (isMoving) {
-    //blink LED
+  if (isMoving == true) {
+    unsigned long currentMillis=millis();
+    if(currentMillis - prevMillis >= elevatorLEDBlinkInterval){
+      prevMillis=currentMillis;
+      if(elevatorLEDCurrentState==LOW){
+        elevatorLEDCurrentState = HIGH;
+      }
+      else{
+        elevatorLEDCurrentState= LOW;
+      }
+      digitalWrite(elevatorStateLED, elevatorLEDCurrentState);
+    }
   }
   floorIndicators(floor);
+  buzzerMode(0);
   return floor;
 }
 
 void buzzerMode(int state) {
   switch (state) {
     case 1:  //arrival
-      tone(buzzer, 250, 100);
+      tone(buzzer, 5000, 1000);
       break;
     case 2:  //moving
       tone(buzzer, 250, 100);
@@ -80,9 +94,9 @@ void setup() {
   pinMode(secondFloorBtn, INPUT_PULLUP);
   pinMode(thirdFloorBtn, INPUT_PULLUP);
   buzzerMode(0);
-  elevatorState(0, elevatorMoving);
+  elevatorState(1, true);
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
+  elevatorState(2, true);
 }
