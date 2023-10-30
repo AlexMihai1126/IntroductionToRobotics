@@ -12,8 +12,10 @@ Video of the setup in action: https://youtu.be/7HbvjDEhaHs
 
 ## Homework 2
 Task: "This assignment involves simulating a 3-floor elevator control system using LEDs, buttons, and a buzzer with Arduino. By the end of this task, you will gain experience in using button state change, implementing debouncing techniques, and coordinating multiple components to represent real-world scenarios. Design a control system that simulates a 3-floor elevator using the Arduino platform."
+Last updated 30.10.2023 22:20
+Components used: 4 LEDs (3 blue LEDs, one for each floor, and one yellow LED for indicating the elevator's state), 3 buttons, one for each floor to call the elevator, 4 330 ohm resistors, one for each LED, one buzzer to make a sound when state changes happen, a 100 ohm resistor for the buzzer, breadboard and necessary wires.
 
-Components used: 4 LEDs (3 blue LEDs, one for each floor, and one yellow LED for indicating the elevator's state), 3 buttons, one for each floor to call the elevator, 4 330 ohm resistors, one for each LED, breadboard and necessary wires.
+The code file for the setup is located in the folder "Homework 2".
 
 Image of the setup: UPCOMING
 
