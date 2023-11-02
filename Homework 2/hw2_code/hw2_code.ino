@@ -1,5 +1,3 @@
-#include <SimpleStack.h>
-
 #define firstFloorLED 7
 #define secondFloorLED 8
 #define thirdFloorLED 9
@@ -8,8 +6,9 @@
 #define firstFloorBtn 4
 #define secondFloorBtn 12
 #define thirdFloorBtn 13
-#define doorCloseTimer 2500
-#define moveTime 5000
+#define doorCloseTimer 1000
+#define waitTime 500 //posibil sa nu am nevoie
+#define moveTime 2500
 #define debounceTime 150
 #define elevatorLEDBlinkInterval 250
 
@@ -21,6 +20,8 @@ enum State {
 };
 
 int currentFloor = 1; //we always start from the 1st floor
+int targetFloor = 1;
+bool isAcceptingCmd = true;
 bool firstFloorBtnLastReading = LOW;
 bool secondFloorBtnLastReading = LOW;
 bool thirdFloorBtnLastReading = LOW;
@@ -31,8 +32,6 @@ bool elevatorLEDCurrentState = LOW;
 unsigned long prevMillisMove = 0;
 unsigned long prevMillisDoors = 0;
 unsigned long lastDebounceTime = 0;
-SimpleStack<int> floorStack(10);
-int topFloorOnStack = 0;
 State buzzerAction = OFF; //we use enum to avoid magic numbers
 
 void floorIndicators(int floor) {
@@ -115,7 +114,7 @@ void loop() {
   bool secondFloorBtnReading = !digitalRead(secondFloorBtn);
   bool thirdFloorBtnReading = !digitalRead(thirdFloorBtn);  //we use ! because we have a PULLUP configuration meaning we have to invert the output
 
-  if (firstFloorBtnReading != firstFloorBtnLastReading) {
+  if (firstFloorBtnReading != firstFloorBtnLastReading && isAcceptingCmd == true) {
     lastDebounceTime = millis();
   }
   if ((millis() - lastDebounceTime) > debounceTime) {
@@ -123,14 +122,15 @@ void loop() {
       firstFloorBtnState = firstFloorBtnReading;
       if (firstFloorBtnReading == HIGH) {
         Serial.println("Call from 1st floor");
-        floorStack.push(1);
+        isAcceptingCmd = false;
+        targetFloor = 1;
       }
     }
   }
   firstFloorBtnLastReading = firstFloorBtnReading;
   //pt buton 1
 
-  if (secondFloorBtnReading != secondFloorBtnLastReading) {
+  if (secondFloorBtnReading != secondFloorBtnLastReading && isAcceptingCmd == true) {
     lastDebounceTime = millis();
   }
   if ((millis() - lastDebounceTime) > debounceTime) {
@@ -138,7 +138,8 @@ void loop() {
       secondFloorBtnState = secondFloorBtnReading;
       if (secondFloorBtnReading == HIGH) {
         Serial.println("Call from 2nd floor");
-        floorStack.push(2);
+        isAcceptingCmd = false;
+        targetFloor = 2
       }
     }
   }
@@ -146,7 +147,7 @@ void loop() {
   //pt buton 2
 
 
-  if (thirdFloorBtnReading != thirdFloorBtnLastReading) {
+  if (thirdFloorBtnReading != thirdFloorBtnLastReading && isAcceptingCmd == true) {
     lastDebounceTime = millis();
   }
   if ((millis() - lastDebounceTime) > debounceTime) {
@@ -154,16 +155,15 @@ void loop() {
       thirdFloorBtnState = thirdFloorBtnReading;
       if (thirdFloorBtnReading == HIGH) {
         Serial.println("Call from 3rd floor");
-        floorStack.push(3);
+        isAcceptingCmd = false;
+        targetFloor = 3;
       }
     }
   }
   thirdFloorBtnLastReading = thirdFloorBtnReading;
   //pt buton 3
 
-  if (!floorStack.isEmpty()) {
-    floorStack.peek(&topFloorOnStack);
-    if (currentFloor != topFloorOnStack) {
+    if (currentFloor != targetFloor) {
       unsigned long currentMillisDoors = millis();
       Serial.println("Floor call is not from the current floor, executing");
       elevatorLED(false);
@@ -179,7 +179,8 @@ void loop() {
       if (currentMillisMove - prevMillisMove >= moveTime) {
         prevMillisMove = currentMillisMove;
         Serial.println("Elevator arrived at the desired floor.");
-        currentFloor = topFloorOnStack;
+        currentFloor = targetFloor;
+        isAcceptingCmd = true;
         floorIndicators(currentFloor);
         buzzerMode(buzzerAction=ARRIVAL);
         elevatorLED(false);
@@ -187,7 +188,5 @@ void loop() {
     } else {
       Serial.println("Ignoring call as we are already at the floor that the button was pressed from");
     }
-    int objToRemove = topFloorOnStack;
-    floorStack.pop(&objToRemove);
   }
 }
