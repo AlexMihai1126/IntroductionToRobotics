@@ -13,12 +13,10 @@ Video of the setup in action: https://youtu.be/7HbvjDEhaHs
 ## Homework 2
 Task: "This assignment involves simulating a 3-floor elevator control system using LEDs, buttons, and a buzzer with Arduino. By the end of this task, you will gain experience in using button state change, implementing debouncing techniques, and coordinating multiple components to represent real-world scenarios. Design a control system that simulates a 3-floor elevator using the Arduino platform."
 
-Components used: 4 LEDs (3 blue LEDs, one for each floor, and one yellow LED for indicating the elevator's state), 3 buttons, one for each floor to call the elevator, 4 330 ohm resistors, one for each LED, one buzzer to make a sound when state changes happen, a 100 ohm resistor for the buzzer, breadboard and necessary wires.
+Components used: 4 LEDs (3 blue LEDs, one for each floor, and one yellow LED for indicating the elevator's state), 3 buttons, one for each floor to call the elevator, 4 330 ohm resistors, one for each LED, one buzzer to make a sound when state changes happen, a 100 ohm resistor for the buzzer, breadboard and necessary wires. Last updated (HW2) 03.11.2023 20:12
 
 The code file for the setup is located in the folder "Homework 2".
 
 Image of the setup: ![](https://github.com/AlexMihai1126/IntroductionToRobotics/blob/main/Homework%202/images/IMG_4800.jpg)
 
-Video of the setup: UPCOMING (when the setup will be fully functional, after the deadline if possible, see note below).
-
-Notes about HW2: I have not been able to get the setup fully working, and won't be able to do so until the deadline, I accept losing A LOT of points on this homework because it's not working properly, but I want to understand the millis function better and why my implementation here is flawed and does not work properly. Last updated (HW2) 30.10.2023 22:40
+Video of the setup: https://youtu.be/Nxbz4RIpOkA
