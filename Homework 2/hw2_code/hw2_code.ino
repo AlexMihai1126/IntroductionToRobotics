@@ -8,6 +8,7 @@
 #define thirdFloorBtn 13
 #define doorCloseTimer 1000
 #define moveTime 2500
+#define waitTime 250
 #define debounceTime 150
 #define elevatorLEDBlinkInterval 250
 
@@ -33,8 +34,10 @@ bool movingSoundPlayed = true;  //prevent the sound from playing until the eleva
 short int floorsToTravel = 0;   // we scale our move time based on this number
 unsigned long startMillisMove = 0;
 unsigned long startMillisDoors = 0;
-bool startedMoveCounter = false;
-bool startedDoorsCounter = false;
+unsigned long startMillisWait = 0;
+bool startedMoveTime = false;
+bool startedDoorsTime = false;
+bool startedWaitTime = false;
 bool coomputedFloorsToTravel = false;
 unsigned long lastDebounceTime = 0;
 unsigned long prevMillisLED = 0;
@@ -68,7 +71,7 @@ void floorIndicators(int floor) {
 void buzzerMode(int state) {
   switch (state) {
     case 0:  //arrival
-      tone(buzzer, 1500, 500);
+      tone(buzzer, 1500, 350);
       Serial.println("Buzzer made an arrival sound");
       break;
     case 1:  //moving
@@ -76,7 +79,7 @@ void buzzerMode(int state) {
       Serial.println("Buzzer made a moving sound");
       break;
     case 2:  //doors closing
-      tone(buzzer, 6000, 250);
+      tone(buzzer, 350, 150);
       Serial.println("Buzzer made a door closing sound");
       break;
     default:  //off
@@ -172,9 +175,9 @@ void loop() {
   //pt buton 3
   elevatorLED();
   if (isAcceptingCmd == false) {
-    if(currentFloor == targetFloor){
-       Serial.println("Ignoring call as we are already at the floor that the button was pressed from");
-        isAcceptingCmd = true; //we can only end up in this state if the floor call is from the same one we are stationed at so we need to reenable accepting commands.
+    if (currentFloor == targetFloor) {
+      Serial.println("Ignoring call as we are already at the floor that the button was pressed from");
+      isAcceptingCmd = true;  //we can only end up in this state if the floor call is from the same one we are stationed at so we need to reenable accepting commands.
     }
     if ((currentFloor != targetFloor) && elevatorIsStatic == true) {
       if (coomputedFloorsToTravel == false) {
@@ -184,9 +187,9 @@ void loop() {
         Serial.println("Floor call is not from the current floor, executing");
         coomputedFloorsToTravel = true;
       }
-      if (startedDoorsCounter == false) {
+      if (startedDoorsTime == false) {
         startMillisDoors = millis();
-        startedDoorsCounter = true;
+        startedDoorsTime = true;
       }
       if ((millis() - startMillisDoors >= doorCloseTimer) && elevatorIsStatic == true) {
         Serial.println("Doors have closed.");
@@ -196,13 +199,19 @@ void loop() {
       }
     }
     if (elevatorIsStatic == false) {
-      if (movingSoundPlayed == false) {
-        buzzerMode(buzzerAction = MOVING);
-        movingSoundPlayed = true;
+      if (startedWaitTime == false) {
+        startMillisWait = millis();
+        startedWaitTime = true;
       }
-      if (startedMoveCounter == false) {
+      if (millis() - startMillisWait >= waitTime) {
+        if (movingSoundPlayed == false) {
+          buzzerMode(buzzerAction = MOVING);
+          movingSoundPlayed = true;
+        }
+      }
+      if (startedMoveTime == false) {
         startMillisMove = millis();
-        startedMoveCounter = true;
+        startedMoveTime = true;
       }
       if ((millis() - startMillisMove >= (moveTime * floorsToTravel)) && elevatorIsStatic == false) {
         currentFloor = targetFloor;
@@ -211,11 +220,11 @@ void loop() {
         Serial.println("Elevator arrived at the desired floor.");
         isAcceptingCmd = true;
         elevatorIsStatic = true;
-        startedDoorsCounter = false;
-        startedMoveCounter = false;
+        startedDoorsTime = false;
+        startedMoveTime = false;
+        startedWaitTime = false;
         coomputedFloorsToTravel = false;
       }
     }
-
-  } 
+  }
 }
