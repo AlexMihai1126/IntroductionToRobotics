@@ -10,7 +10,7 @@
 #define pinSW 2
 #define pinX A0
 #define pinY A1
-#define debugEnabled true
+#define debugEnabled false
 #define noOfDigits 10
 #define debounceTime 200
 #define resetTime 1500
@@ -37,11 +37,12 @@ enum segmentsEnum {
 
 joystickState joyState = STATIC;
 segmentsEnum currSegment = dotPoint;
-segmentsEnum prevSegment = dotPoint;
 
 bool isSegmentClicked[segSize] = {
   false, false, false, false, false, false, false, false
 };
+
+bool movementHasTriggered = false;
 
 byte joySwReading = LOW;
 byte joySwState = LOW;
@@ -60,43 +61,51 @@ int segments[segSize] = {
 };
 
 void getJoystickState() {
-  if (xValue > maxThreshold) {
+  if (xValue > maxThreshold && movementHasTriggered == false) {
     if (debugEnabled == true) {
       Serial.println("UP");
     }
+    movementHasTriggered = true;
     joyState = UP;
   }
 
-  if (xValue < minThreshold) {
+  if (xValue < minThreshold && movementHasTriggered == false) {
     if (debugEnabled == true) {
       Serial.println("DOWN");
     }
+    movementHasTriggered = true;
     joyState = DOWN;
   }
 
-  if (yValue > maxThreshold) {
+  if (yValue > maxThreshold && movementHasTriggered == false) {
     if (debugEnabled == true) {
       Serial.println("RIGHT");
     }
+    movementHasTriggered = true;
     joyState = RIGHT;
   }
 
-  if (yValue < minThreshold) {
+  if (yValue < minThreshold && movementHasTriggered == false) {
     if (debugEnabled == true) {
       Serial.println("LEFT");
     }
+    movementHasTriggered = true;
     joyState = LEFT;
   }
 
   if (xValue >= minThreshold && xValue < maxThreshold && yValue >= minThreshold && yValue < maxThreshold) {
     if (debugEnabled == true) {
-      Serial.println("STATIC");
+      //Serial.println("STATIC");
     }
+    movementHasTriggered = false;
     joyState = STATIC;
   }
 }
 
 void blinkCurrentSegment() {
+  // if (isSegmentClicked[currSegment] == true) {
+  //   return;
+  // }
   if (millis() - prevMillisBlink >= blinkInterval) {
     prevMillisBlink = millis();
     if (segmentBlinkState == LOW) {
@@ -104,10 +113,11 @@ void blinkCurrentSegment() {
     } else {
       segmentBlinkState = LOW;
     }
-    if(isSegmentClicked[currSegment]==true){
-      return;
-    }
     digitalWrite(segments[currSegment], segmentBlinkState);
+    if (debugEnabled) {
+      Serial.print("Blinking segment: ");
+      Serial.println(currSegment);
+    }
   }
 }
 
@@ -115,12 +125,30 @@ void checkSegmentClicked() {
   for (int i = 0; i < segSize; i++) {
     if (isSegmentClicked[i] == true) {
       digitalWrite(segments[i], HIGH);
+      if (debugEnabled == true) {
+        Serial.print("Segment clicked: ");
+        Serial.println(i);
+      }
     }
   }
 }
 
 void shutdownPrevSegment(segmentsEnum segment) {
   digitalWrite(segments[segment], LOW);
+  if (debugEnabled == true) {
+    Serial.print("Reset segment: ");
+    Serial.println(segment);
+  }
+}
+
+void resetBoard() {
+  for (int i = 0; i < segSize; i++) {
+    digitalWrite(segments[i], LOW);
+  }
+  currSegment = dotPoint;
+  if (debugEnabled == true) {
+    Serial.println("Reset the board.");
+  }
 }
 
 void getSwitchState() {
@@ -161,24 +189,20 @@ void loop() {
   getJoystickState();
   //getSwitchState();
   if (joyState == UP) {
-    prevSegment = currSegment;
+    shutdownPrevSegment(currSegment);
     currSegment = A;
-    shutdownPrevSegment(prevSegment);
   }
   if (joyState == DOWN) {
-    prevSegment = currSegment;
+    shutdownPrevSegment(currSegment);
     currSegment = dotPoint;
-    shutdownPrevSegment(prevSegment);
   }
   if (joyState == LEFT) {
-    prevSegment = currSegment;
+    shutdownPrevSegment(currSegment);
     currSegment = E;
-    shutdownPrevSegment(prevSegment);
   }
   if (joyState == RIGHT) {
-    prevSegment = currSegment;
+    shutdownPrevSegment(currSegment);
     currSegment = C;
-    shutdownPrevSegment(prevSegment);
   }
   blinkCurrentSegment();
 }
