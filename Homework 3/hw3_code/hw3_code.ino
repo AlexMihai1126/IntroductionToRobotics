@@ -39,14 +39,9 @@ joystickState joyState = STATIC;
 segmentsEnum currSegment = dotPoint;
 segmentsEnum prevSegment = dotPoint;
 
-bool isAClicked = false;
-bool isBClicked = false;
-bool isCClicked = false;
-bool isDClicked = false;
-bool isEClicked = false;
-bool isFClicked = false;
-bool isGClicked = false;
-bool isDPClicked = false;
+bool isSegmentClicked[segSize] = {
+  false, false, false, false, false, false, false, false
+};
 
 byte joySwReading = LOW;
 byte joySwState = LOW;
@@ -109,11 +104,22 @@ void blinkCurrentSegment() {
     } else {
       segmentBlinkState = LOW;
     }
+    if(isSegmentClicked[currSegment]==true){
+      return;
+    }
     digitalWrite(segments[currSegment], segmentBlinkState);
   }
 }
 
-void shutdownPrevSegment (segmentsEnum segment){
+void checkSegmentClicked() {
+  for (int i = 0; i < segSize; i++) {
+    if (isSegmentClicked[i] == true) {
+      digitalWrite(segments[i], HIGH);
+    }
+  }
+}
+
+void shutdownPrevSegment(segmentsEnum segment) {
   digitalWrite(segments[segment], LOW);
 }
 
@@ -148,30 +154,31 @@ void setup() {
   Serial.begin(9600);
 }
 void loop() {
+  checkSegmentClicked();
   joySwReading = !digitalRead(pinSW);
   xValue = analogRead(pinX);
   yValue = analogRead(pinY);
   getJoystickState();
   //getSwitchState();
-  if(joyState == UP){
+  if (joyState == UP) {
     prevSegment = currSegment;
     currSegment = A;
     shutdownPrevSegment(prevSegment);
   }
-  if(joyState == DOWN){
+  if (joyState == DOWN) {
     prevSegment = currSegment;
     currSegment = dotPoint;
     shutdownPrevSegment(prevSegment);
   }
-  if(joyState == LEFT){
+  if (joyState == LEFT) {
     prevSegment = currSegment;
     currSegment = E;
     shutdownPrevSegment(prevSegment);
   }
-  if(joyState == RIGHT){
+  if (joyState == RIGHT) {
     prevSegment = currSegment;
     currSegment = C;
     shutdownPrevSegment(prevSegment);
   }
-    blinkCurrentSegment();
+  blinkCurrentSegment();
 }
