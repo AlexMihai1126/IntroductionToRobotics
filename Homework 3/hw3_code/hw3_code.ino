@@ -14,6 +14,7 @@
 #define noOfDigits 10
 #define debounceTime 200
 #define resetTime 1500
+#define blinkInterval 350
 
 enum joystickState {
   UP,
@@ -23,51 +24,69 @@ enum joystickState {
   STATIC
 };
 
-joystickState joyState = STATIC;
+enum segmentsEnum {
+  A,
+  B,
+  C,
+  D,
+  E,
+  F,
+  G,
+  dotPoint
+};
 
-bool isAcceptingChanges = true;
+joystickState joyState = STATIC;
+segmentsEnum currSegment = dotPoint;
+segmentsEnum prevSegment = dotPoint;
+
+bool isAClicked = false;
+bool isBClicked = false;
+bool isCClicked = false;
+bool isDClicked = false;
+bool isEClicked = false;
+bool isFClicked = false;
+bool isGClicked = false;
+bool isDPClicked = false;
 
 byte joySwReading = LOW;
 byte joySwState = LOW;
 byte joySwStateLastReading = LOW;
 byte dotPointState = LOW;
+byte segmentBlinkState = LOW;
 
+unsigned long prevMillisBlink = 0;
 int minThreshold = 480;
 int maxThreshold = 550;
 int xValue = 0;
 int yValue = 0;
-int lastDebounceTime = 0;
+unsigned long lastDebounceTime = 0;
 int segments[segSize] = {
   pinA, pinB, pinC, pinD, pinE, pinF, pinG, pinDP
 };
 
 void getJoystickState() {
-  if (xValue > maxThreshold && isAcceptingChanges == true) {
-    isAcceptingChanges = false;
+  if (xValue > maxThreshold) {
     if (debugEnabled == true) {
       Serial.println("UP");
     }
     joyState = UP;
   }
 
-  if (xValue < minThreshold && isAcceptingChanges == true) {
-    isAcceptingChanges = false;
+  if (xValue < minThreshold) {
     if (debugEnabled == true) {
       Serial.println("DOWN");
     }
     joyState = DOWN;
   }
 
-  if (yValue > maxThreshold && isAcceptingChanges == true) {
-    isAcceptingChanges = false;
+  if (yValue > maxThreshold) {
     if (debugEnabled == true) {
       Serial.println("RIGHT");
     }
     joyState = RIGHT;
   }
 
-  if (yValue < minThreshold && isAcceptingChanges == true) {
-    isAcceptingChanges = false;
+  if (yValue < minThreshold) {
     if (debugEnabled == true) {
       Serial.println("LEFT");
     }
@@ -75,12 +94,27 @@ void getJoystickState() {
   }
 
   if (xValue >= minThreshold && xValue < maxThreshold && yValue >= minThreshold && yValue < maxThreshold) {
-    isAcceptingChanges = true;
     if (debugEnabled == true) {
       Serial.println("STATIC");
     }
     joyState = STATIC;
   }
+}
+
+void blinkCurrentSegment() {
+  if (millis() - prevMillisBlink >= blinkInterval) {
+    prevMillisBlink = millis();
+    if (segmentBlinkState == LOW) {
+      segmentBlinkState = HIGH;
+    } else {
+      segmentBlinkState = LOW;
+    }
+    digitalWrite(segments[currSegment], segmentBlinkState);
+  }
+}
+
+void shutdownPrevSegment (segmentsEnum segment){
+  digitalWrite(segments[segment], LOW);
 }
 
 void getSwitchState() {
@@ -93,15 +127,14 @@ void getSwitchState() {
       joySwState = joySwReading;
       if (joySwReading == HIGH) {
         joySwState = HIGH;
-      }
-      else {
-      joySwState = LOW;
+      } else {
+        joySwState = LOW;
       }
     }
   }
   joySwStateLastReading = joySwReading;
-  
-  if(debugEnabled == true){
+
+  if (debugEnabled == true) {
     Serial.print("Switch state is: ");
     Serial.println(joySwState);
   }
@@ -119,5 +152,26 @@ void loop() {
   xValue = analogRead(pinX);
   yValue = analogRead(pinY);
   getJoystickState();
-  getSwitchState();
+  //getSwitchState();
+  if(joyState == UP){
+    prevSegment = currSegment;
+    currSegment = A;
+    shutdownPrevSegment(prevSegment);
+  }
+  if(joyState == DOWN){
+    prevSegment = currSegment;
+    currSegment = dotPoint;
+    shutdownPrevSegment(prevSegment);
+  }
+  if(joyState == LEFT){
+    prevSegment = currSegment;
+    currSegment = E;
+    shutdownPrevSegment(prevSegment);
+  }
+  if(joyState == RIGHT){
+    prevSegment = currSegment;
+    currSegment = C;
+    shutdownPrevSegment(prevSegment);
+  }
+    blinkCurrentSegment();
 }
