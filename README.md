@@ -20,3 +20,19 @@ The code file for the setup is located in the folder "Homework 2".
 Image of the setup: ![](https://github.com/AlexMihai1126/IntroductionToRobotics/blob/main/Homework%202/images/IMG_4800.jpg)
 
 Video of the setup: https://youtu.be/Nxbz4RIpOkA
+
+## Homework 3
+
+Task: "You will use the joystick to control the position ofthe segment and ”draw” on the display.  The movement between segmentsshould be natural, meaning they should jump from the current positiononly to neighbors, but without passing through ”walls”."
+
+How it should operate: "The  initial  position  should  be  on  the  DP.  The  currentposition always blinks (irrespective of the fact that the segment is on oroff).  Use the joystick to move from one position to neighbors (see table forcorresponding movement).  Short pressing the button toggles the segmentstate  from  ON  to  OFF  or  from  OFF  to  ON.  Long  pressing  the  buttonresets the entire display by turning all the segments OFF and moving thecurrent position to the decimal point."
+
+Components used: one 7-segment display, one red LED, 9 330 ohm resistors for each LED (the 8 in the display and the additional LED), joystick, breadboard and the necessary wires
+
+The code file for the setup is located in the folder "Homework 3".
+
+Image of the setup: ![](https://github.com/AlexMihai1126/IntroductionToRobotics/blob/main/Homework%203/images/IMG_4923.jpeg)
+
+Video of the setup: UPCOMING
+
+Notes: an extra red LED was used to let the user know if the current segment has been clicked or not (as it blinks when it's been selected and hard to know what state it is currently in). Interrupts were not used and long pressing the joystick does not reset the board.
