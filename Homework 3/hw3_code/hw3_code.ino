@@ -6,6 +6,7 @@
 #define pinF 6
 #define pinG 5
 #define pinDP 4
+#define pinClickedLED 11
 #define segSize 8
 #define pinSW 2
 #define pinX A0
@@ -44,6 +45,8 @@ bool isSegmentClicked[segSize] = {
 
 bool cmdExecuted = false;
 bool gotJostickState = false;
+bool btnHasTriggered = false;
+bool boardHasBeenReset = false;
 
 byte joySwReading = LOW;
 byte joySwState = LOW;
@@ -52,6 +55,7 @@ byte dotPointState = LOW;
 byte segmentBlinkState = LOW;
 
 unsigned long prevMillisBlink = 0;
+unsigned long rstInitialTimeMoment = 0;
 int minThreshold = 480;
 int maxThreshold = 550;
 int xValue = 0;
@@ -60,6 +64,60 @@ unsigned long lastDebounceTime = 0;
 int segments[segSize] = {
   pinA, pinB, pinC, pinD, pinE, pinF, pinG, pinDP
 };
+
+void resetBoard() {
+  for (int i = 0; i < segSize; i++) {
+    digitalWrite(segments[i], LOW);
+    isSegmentClicked[i] = false;
+  }
+  currSegment = dotPoint;
+  boardHasBeenReset = true;
+  if (debugEnabled == true) {
+    Serial.println("Reset the board.");
+  }
+}
+
+void setup() {
+  for (int i = 0; i < segSize; i++) {
+    pinMode(segments[i], OUTPUT);
+  }
+  pinMode(pinSW, INPUT_PULLUP);
+  Serial.begin(9600);
+}
+void loop() {
+  cleanupUnusedSegments();
+  checkWhichSegmentsAreClicked();
+  checkIfCurrSegmentIsClicked();
+  joySwReading = !digitalRead(pinSW);
+  xValue = analogRead(pinX);
+  yValue = analogRead(pinY);
+  moveSegments();
+  clickCurrSegIfSwClicked();
+  blinkCurrentSegment();
+}
+
+void getSwitchState() {
+  if (joySwReading != joySwStateLastReading) {
+    lastDebounceTime = millis();
+    rstInitialTimeMoment = lastDebounceTime;
+  }
+
+  if ((millis() - lastDebounceTime) >= debounceTime) {
+    if (joySwReading != joySwState) {
+      joySwState = joySwReading;
+      if (joySwReading == HIGH) {
+        joySwState = HIGH;
+      } else {
+        joySwState = LOW;
+        btnHasTriggered = false;
+      }
+    }
+  }
+  joySwStateLastReading = joySwReading;
+  // if((millis()-rstInitialTimeMoment) >= resetTime && boardHasBeenReset == false){
+  //   resetBoard();
+  // }
+}
 
 void getJoystickState() {
   if (gotJostickState == false) {
@@ -106,6 +164,7 @@ void getJoystickState() {
   }
 }
 
+
 void blinkCurrentSegment() {
   if (millis() - prevMillisBlink >= blinkInterval) {
     prevMillisBlink = millis();
@@ -122,19 +181,33 @@ void blinkCurrentSegment() {
   }
 }
 
-void checkSegmentClicked() {
+void clickCurrSegIfSwClicked() {
+  getSwitchState();
+  if (joySwState == HIGH && btnHasTriggered == false) {
+    isSegmentClicked[currSegment] = !isSegmentClicked[currSegment];
+    btnHasTriggered = true;
+  }
+}
+
+void checkWhichSegmentsAreClicked() {
   for (int i = 0; i < segSize; i++) {
-    if (i == currSegment) {
-      return;
-    } else {
-      if (isSegmentClicked[i] == true) {
-        digitalWrite(segments[i], HIGH);
-        if (debugEnabled == true) {
-          Serial.print("Segment clicked: ");
-          Serial.println(i);
-        }
+    if (isSegmentClicked[i] == true && i != currSegment) {
+      digitalWrite(segments[i], HIGH);
+      if (debugEnabled == true) {
+        Serial.print("Segment clicked: ");
+        Serial.println(i);
       }
     }
+  }
+}
+
+
+void checkIfCurrSegmentIsClicked() {
+  if (isSegmentClicked[currSegment] == true) {
+    digitalWrite(pinClickedLED, HIGH);
+    return;
+  } else {
+    digitalWrite(pinClickedLED, LOW);
   }
 }
 
@@ -152,43 +225,10 @@ void shutdownPrevSegment(segmentsEnum segment) {
 
 void cleanupUnusedSegments() {
   for (int i = 0; i < segSize; i++) {
-    if(i==currSegment){
-      return;
-    }else{
-      if(isSegmentClicked[i]==false){
-        digitalWrite(segments[i], LOW);
-      }
+    if (isSegmentClicked[i] == false && i != currSegment) {
+      digitalWrite(segments[i], LOW);
     }
   }
-}
-
-void resetBoard() {
-  for (int i = 0; i < segSize; i++) {
-    digitalWrite(segments[i], LOW);
-    isSegmentClicked[i] = false;
-  }
-  currSegment = dotPoint;
-  if (debugEnabled == true) {
-    Serial.println("Reset the board.");
-  }
-}
-
-void getSwitchState() {
-  if (joySwReading != joySwStateLastReading) {
-    lastDebounceTime = millis();
-  }
-
-  if ((millis() - lastDebounceTime) >= debounceTime) {
-    if (joySwReading != joySwState) {
-      joySwState = joySwReading;
-      if (joySwReading == HIGH) {
-        joySwState = HIGH;
-      } else {
-        joySwState = LOW;
-      }
-    }
-  }
-  joySwStateLastReading = joySwReading;
 }
 
 void moveSegments() {
@@ -411,29 +451,4 @@ void moveSegments() {
         }
     }
   }
-}
-
-void clickSegments() {
-  getSwitchState();
-  if (joySwState == HIGH) {
-    isSegmentClicked[currSegment] = !isSegmentClicked[currSegment];
-  }
-}
-
-void setup() {
-  for (int i = 0; i < segSize; i++) {
-    pinMode(segments[i], OUTPUT);
-  }
-  pinMode(pinSW, INPUT_PULLUP);
-  Serial.begin(9600);
-}
-void loop() {
-  cleanupUnusedSegments();
-  joySwReading = !digitalRead(pinSW);
-  xValue = analogRead(pinX);
-  yValue = analogRead(pinY);
-  moveSegments();
-  clickSegments();
-  blinkCurrentSegment();
-  checkSegmentClicked();
 }
