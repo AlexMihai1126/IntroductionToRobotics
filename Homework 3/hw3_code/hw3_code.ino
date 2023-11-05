@@ -153,6 +153,7 @@ void shutdownPrevSegment(segmentsEnum segment) {
 void resetBoard() {
   for (int i = 0; i < segSize; i++) {
     digitalWrite(segments[i], LOW);
+    isSegmentClicked[i] = false;
   }
   currSegment = dotPoint;
   if (debugEnabled == true) {
@@ -402,10 +403,8 @@ void moveSegments() {
 
 void clickSegments() {
   getSwitchState();
-  if (joySwState == 1) {
-    isSegmentClicked[currSegment] = true;
-  } else {
-    isSegmentClicked[currSegment] = false;
+  if (joySwState == HIGH) {
+    isSegmentClicked[currSegment] = !isSegmentClicked[currSegment];
   }
 }
 
