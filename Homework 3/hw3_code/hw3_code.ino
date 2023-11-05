@@ -10,7 +10,7 @@
 #define pinSW 2
 #define pinX A0
 #define pinY A1
-#define debugEnabled true
+#define debugEnabled false
 #define noOfDigits 10
 #define debounceTime 200
 #define resetTime 1500
@@ -146,6 +146,18 @@ void shutdownPrevSegment(segmentsEnum segment) {
     if (debugEnabled == true) {
       Serial.print("Reset segment: ");
       Serial.println(segment);
+    }
+  }
+}
+
+void cleanupUnusedSegments() {
+  for (int i = 0; i < segSize; i++) {
+    if(i==currSegment){
+      return;
+    }else{
+      if(isSegmentClicked[i]==false){
+        digitalWrite(segments[i], LOW);
+      }
     }
   }
 }
@@ -416,6 +428,7 @@ void setup() {
   Serial.begin(9600);
 }
 void loop() {
+  cleanupUnusedSegments();
   joySwReading = !digitalRead(pinSW);
   xValue = analogRead(pinX);
   yValue = analogRead(pinY);
