@@ -10,7 +10,7 @@
 #define pinSW 2
 #define pinX A0
 #define pinY A1
-#define debugEnabled false
+#define debugEnabled true
 #define noOfDigits 10
 #define debounceTime 200
 #define resetTime 1500
@@ -42,7 +42,8 @@ bool isSegmentClicked[segSize] = {
   false, false, false, false, false, false, false, false
 };
 
-bool movementHasTriggered = false;
+bool cmdExecuted = false;
+bool gotJostickState = false;
 
 byte joySwReading = LOW;
 byte joySwState = LOW;
@@ -61,51 +62,51 @@ int segments[segSize] = {
 };
 
 void getJoystickState() {
-  if (xValue > maxThreshold && movementHasTriggered == false) {
-    if (debugEnabled == true) {
-      Serial.println("UP");
+  if (gotJostickState == false) {
+    if (xValue > maxThreshold) {
+      if (debugEnabled == true) {
+        Serial.println("UP");
+      }
+      gotJostickState = true;
+      joyState = UP;
     }
-    movementHasTriggered = true;
-    joyState = UP;
-  }
 
-  if (xValue < minThreshold && movementHasTriggered == false) {
-    if (debugEnabled == true) {
-      Serial.println("DOWN");
+    if (xValue < minThreshold) {
+      if (debugEnabled == true) {
+        Serial.println("DOWN");
+      }
+      gotJostickState = true;
+      joyState = DOWN;
     }
-    movementHasTriggered = true;
-    joyState = DOWN;
-  }
 
-  if (yValue > maxThreshold && movementHasTriggered == false) {
-    if (debugEnabled == true) {
-      Serial.println("RIGHT");
+    if (yValue > maxThreshold) {
+      if (debugEnabled == true) {
+        Serial.println("RIGHT");
+      }
+      gotJostickState = true;
+      joyState = RIGHT;
     }
-    movementHasTriggered = true;
-    joyState = RIGHT;
-  }
 
-  if (yValue < minThreshold && movementHasTriggered == false) {
-    if (debugEnabled == true) {
-      Serial.println("LEFT");
+    if (yValue < minThreshold) {
+      if (debugEnabled == true) {
+        Serial.println("LEFT");
+      }
+      gotJostickState = true;
+      joyState = LEFT;
     }
-    movementHasTriggered = true;
-    joyState = LEFT;
   }
 
   if (xValue >= minThreshold && xValue < maxThreshold && yValue >= minThreshold && yValue < maxThreshold) {
     if (debugEnabled == true) {
       //Serial.println("STATIC");
     }
-    movementHasTriggered = false;
+    gotJostickState = false;
+    cmdExecuted = false;
     joyState = STATIC;
   }
 }
 
 void blinkCurrentSegment() {
-  // if (isSegmentClicked[currSegment] == true) {
-  //   return;
-  // }
   if (millis() - prevMillisBlink >= blinkInterval) {
     prevMillisBlink = millis();
     if (segmentBlinkState == LOW) {
@@ -123,21 +124,29 @@ void blinkCurrentSegment() {
 
 void checkSegmentClicked() {
   for (int i = 0; i < segSize; i++) {
-    if (isSegmentClicked[i] == true) {
-      digitalWrite(segments[i], HIGH);
-      if (debugEnabled == true) {
-        Serial.print("Segment clicked: ");
-        Serial.println(i);
+    if (i == currSegment) {
+      return;
+    } else {
+      if (isSegmentClicked[i] == true) {
+        digitalWrite(segments[i], HIGH);
+        if (debugEnabled == true) {
+          Serial.print("Segment clicked: ");
+          Serial.println(i);
+        }
       }
     }
   }
 }
 
 void shutdownPrevSegment(segmentsEnum segment) {
-  digitalWrite(segments[segment], LOW);
-  if (debugEnabled == true) {
-    Serial.print("Reset segment: ");
-    Serial.println(segment);
+  if (isSegmentClicked[segment] == true) {
+    return;
+  } else {
+    digitalWrite(segments[segment], LOW);
+    if (debugEnabled == true) {
+      Serial.print("Reset segment: ");
+      Serial.println(segment);
+    }
   }
 }
 
@@ -156,7 +165,7 @@ void getSwitchState() {
     lastDebounceTime = millis();
   }
 
-  if ((millis() - lastDebounceTime) > debounceTime) {
+  if ((millis() - lastDebounceTime) >= debounceTime) {
     if (joySwReading != joySwState) {
       joySwState = joySwReading;
       if (joySwReading == HIGH) {
@@ -167,10 +176,236 @@ void getSwitchState() {
     }
   }
   joySwStateLastReading = joySwReading;
+}
 
-  if (debugEnabled == true) {
-    Serial.print("Switch state is: ");
-    Serial.println(joySwState);
+void moveSegments() {
+  getJoystickState();
+  if (currSegment == A && cmdExecuted == false) {
+    switch (joyState) {
+      case DOWN:
+        {
+          cmdExecuted = true;
+          shutdownPrevSegment(A);
+          currSegment = G;
+          break;
+        }
+      case LEFT:
+        {
+          cmdExecuted = true;
+          shutdownPrevSegment(A);
+          currSegment = F;
+          break;
+        }
+      case RIGHT:
+        {
+          cmdExecuted = true;
+          shutdownPrevSegment(A);
+          currSegment = B;
+          break;
+        }
+      default:
+        {
+          break;
+        }
+    }
+  }
+  if (currSegment == B && cmdExecuted == false) {
+    switch (joyState) {
+      case UP:
+        {
+          cmdExecuted = true;
+          shutdownPrevSegment(B);
+          currSegment = A;
+          break;
+        }
+      case DOWN:
+        {
+          cmdExecuted = true;
+          shutdownPrevSegment(B);
+          currSegment = G;
+          break;
+        }
+      case LEFT:
+        {
+          cmdExecuted = true;
+          shutdownPrevSegment(B);
+          currSegment = F;
+          break;
+        }
+      default:
+        {
+          break;
+        }
+    }
+  }
+  if (currSegment == C && cmdExecuted == false) {
+    switch (joyState) {
+      case UP:
+        {
+          cmdExecuted = true;
+          shutdownPrevSegment(C);
+          currSegment = G;
+          break;
+        }
+      case DOWN:
+        {
+          cmdExecuted = true;
+          shutdownPrevSegment(C);
+          currSegment = D;
+          break;
+        }
+      case LEFT:
+        {
+          cmdExecuted = true;
+          shutdownPrevSegment(C);
+          currSegment = E;
+          break;
+        }
+      case RIGHT:
+        {
+          cmdExecuted = true;
+          shutdownPrevSegment(C);
+          currSegment = dotPoint;
+          break;
+        }
+      default:
+        {
+          break;
+        }
+    }
+  }
+  if (currSegment == D && cmdExecuted == false) {
+    switch (joyState) {
+      case UP:
+        {
+          cmdExecuted = true;
+          shutdownPrevSegment(D);
+          currSegment = G;
+          break;
+        }
+      case LEFT:
+        {
+          cmdExecuted = true;
+          shutdownPrevSegment(D);
+          currSegment = E;
+          break;
+        }
+      case RIGHT:
+        {
+          cmdExecuted = true;
+          shutdownPrevSegment(D);
+          currSegment = C;
+          break;
+        }
+      default:
+        {
+          break;
+        }
+    }
+  }
+  if (currSegment == E && cmdExecuted == false) {
+    switch (joyState) {
+      case UP:
+        {
+          cmdExecuted = true;
+          shutdownPrevSegment(E);
+          currSegment = G;
+          break;
+        }
+      case DOWN:
+        {
+          cmdExecuted = true;
+          shutdownPrevSegment(E);
+          currSegment = D;
+          break;
+        }
+      case RIGHT:
+        {
+          cmdExecuted = true;
+          shutdownPrevSegment(E);
+          currSegment = C;
+          break;
+        }
+      default:
+        {
+          break;
+        }
+    }
+  }
+  if (currSegment == F && cmdExecuted == false) {
+    switch (joyState) {
+      case UP:
+        {
+          cmdExecuted = true;
+          shutdownPrevSegment(F);
+          currSegment = A;
+          break;
+        }
+      case DOWN:
+        {
+          cmdExecuted = true;
+          shutdownPrevSegment(F);
+          currSegment = G;
+          break;
+        }
+      case RIGHT:
+        {
+          cmdExecuted = true;
+          shutdownPrevSegment(F);
+          currSegment = B;
+          break;
+        }
+      default:
+        {
+          break;
+        }
+    }
+  }
+  if (currSegment == G && cmdExecuted == false) {
+    switch (joyState) {
+      case UP:
+        {
+          cmdExecuted = true;
+          shutdownPrevSegment(G);
+          currSegment = A;
+          break;
+        }
+      case DOWN:
+        {
+          cmdExecuted = true;
+          shutdownPrevSegment(G);
+          currSegment = D;
+          break;
+        }
+      default:
+        {
+          break;
+        }
+    }
+  }
+  if (currSegment == dotPoint && cmdExecuted == false) {
+    switch (joyState) {
+      case LEFT:
+        {
+          cmdExecuted = true;
+          shutdownPrevSegment(dotPoint);
+          currSegment = C;
+          break;
+        }
+      default:
+        {
+          break;
+        }
+    }
+  }
+}
+
+void clickSegments() {
+  getSwitchState();
+  if (joySwState == 1) {
+    isSegmentClicked[currSegment] = true;
+  } else {
+    isSegmentClicked[currSegment] = false;
   }
 }
 
@@ -182,27 +417,11 @@ void setup() {
   Serial.begin(9600);
 }
 void loop() {
-  checkSegmentClicked();
   joySwReading = !digitalRead(pinSW);
   xValue = analogRead(pinX);
   yValue = analogRead(pinY);
-  getJoystickState();
-  //getSwitchState();
-  if (joyState == UP) {
-    shutdownPrevSegment(currSegment);
-    currSegment = A;
-  }
-  if (joyState == DOWN) {
-    shutdownPrevSegment(currSegment);
-    currSegment = dotPoint;
-  }
-  if (joyState == LEFT) {
-    shutdownPrevSegment(currSegment);
-    currSegment = E;
-  }
-  if (joyState == RIGHT) {
-    shutdownPrevSegment(currSegment);
-    currSegment = C;
-  }
+  moveSegments();
+  clickSegments();
   blinkCurrentSegment();
+  checkSegmentClicked();
 }
