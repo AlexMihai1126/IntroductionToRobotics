@@ -35,6 +35,6 @@ The code file for the setup is located in the folder "Homework 3".
 
 Image of the setup: ![](https://github.com/AlexMihai1126/IntroductionToRobotics/blob/main/Homework%203/images/IMG_4923.jpeg)
 
-Video of the setup: UPCOMING
+Video of the setup: https://youtu.be/UzxzS_WTsHg
 
 Notes: an extra red LED was used to let the user know if the current segment has been clicked or not (as it blinks when it's been selected and hard to know what state it is currently in). Interrupts were not used and long pressing the joystick does not reset the board.
