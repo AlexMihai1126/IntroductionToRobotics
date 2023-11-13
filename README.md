@@ -37,4 +37,15 @@ Image of the setup: ![](https://github.com/AlexMihai1126/IntroductionToRobotics/
 
 Video of the setup: https://youtu.be/UzxzS_WTsHg
 
+## Homework 4
+Task given was to implement a stopwatch just like the app on a phone using an Arduino. It counts with a precision of tenths of a second. It starts at 000.0, pressing the start button (1st button) begins the timer. Pressing the 2nd button saves a lap (the current time at the moment the button was pressed) and saves up to 4 values, overwriting them when we reach the limit. The reset button (3rd button) puts the time back at 000.0. The start/stop button and lap button use interrupts for added measuring precision. At 999.9 the timer will go back to 000.0 and start again automatically.
+
+Components used: 4-digit 7-segment display, 8x 330 ohm resistors for each of the LEDs, 3 pushbuttons and a 74HC595 shift register, along with a breadboard and necessary wires.
+
+The code file for the setup is located in the folder "Homework 4".
+
+Image of the setup: ![](https://github.com/AlexMihai1126/IntroductionToRobotics/blob/main/Homework%204/images/20231113_164438551_iOS.jpg)
+
+Video of the setup: UPCOMING
+
 Notes: an extra red LED was used to let the user know if the current segment has been clicked or not (as it blinks when it's been selected and hard to know what state it is currently in). Interrupts were not used and long pressing the joystick does not reset the board.
