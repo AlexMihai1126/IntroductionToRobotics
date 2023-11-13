@@ -48,4 +48,4 @@ The code file for the setup is located in the folder "Homework 4".
 
 Image of the setup: ![](https://github.com/AlexMihai1126/IntroductionToRobotics/blob/main/Homework%204/images/20231113_164438551_iOS.jpg)
 
-Video of the setup: UPCOMING
+Video of the setup: https://youtu.be/aYq58uCmPIw
