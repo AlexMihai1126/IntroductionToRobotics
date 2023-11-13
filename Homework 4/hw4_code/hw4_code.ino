@@ -17,6 +17,7 @@
 int displayDigits[] = { segD1, segD2, segD3, segD4 };
 volatile short int currentLapNumber = 0;
 volatile short int savedLaps = 0;
+volatile short int currentDisplayLapNumber = 0;
 
 byte resetBtnLastReading = LOW;
 byte resetBtnState = LOW;
@@ -36,8 +37,7 @@ byte byteEncodings[encodingsNumber] = {
 
 volatile bool timerIsStarted = false;
 volatile bool resetBtnEnabled = true;
-volatile bool canSaveLaps = false; //we consider the timer is "paused" even at 0.0
-volatile bool timerHasBeenReset = false;
+volatile bool canSaveLaps = false;  //we consider the timer is "paused" even at 0.0
 
 unsigned long lastIncrement = 0;
 unsigned long delayCount = 100;
@@ -60,17 +60,23 @@ void setup() {
     digitalWrite(displayDigits[i], LOW);
   }
   Serial.begin(9600);
-  writeReg(B00000000);
   attachInterrupt(digitalPinToInterrupt(startStopButton), handleStartStop, RISING);
   attachInterrupt(digitalPinToInterrupt(lapButton), handleLap, RISING);
 }
 
 void loop() {
   checkResetBtn();
-  if (millis() - lastIncrement > delayCount && timerIsStarted == true) {
-    stopwatch++;
-    stopwatch %= 10000;
-    lastIncrement = millis();
+  if (timerIsStarted) {
+    if (millis() - lastIncrement > delayCount) {
+      stopwatch++;
+      stopwatch %= 10000;
+      lastIncrement = millis();
+    }
+    canSaveLaps = true;
+    resetBtnEnabled = false;
+  } else {
+    canSaveLaps = false;
+    resetBtnEnabled = true;
   }
   writeNumber(stopwatch);
 }
@@ -90,8 +96,8 @@ void activateDisplay(int displayNumber) {
 void writeNumber(int number) {
   int currentNumber = number;
   int lastDigit = 0;
-  int digits [displayCount] = {0,0,0,0};
-  short int counter = displayCount-1;
+  int digits[displayCount] = { 0, 0, 0, 0 };
+  short int counter = displayCount - 1;
   byte data = B00000000;
   while (currentNumber != 0) {
     lastDigit = currentNumber % 10;
@@ -99,11 +105,11 @@ void writeNumber(int number) {
     counter--;
     currentNumber /= 10;
   }
-  for(int i=0; i < displayCount ;i++){
+  for (int i = 0; i < displayCount; i++) {
     activateDisplay(i);
     data = byteEncodings[digits[i]];
-    if(i == tenthsSecondsDisplay){
-      data += 1; //we activate the dot point for the 3rd display to separate seconds from tenths of a second
+    if (i == tenthsSecondsDisplay) {
+      data += 1;  //we activate the dot point for the 3rd display to separate seconds from tenths of a second
     }
     writeReg(data);
     writeReg(B00000000);
@@ -119,7 +125,7 @@ void checkResetBtn() {
     if (resetBtnReading != resetBtnState) {
       resetBtnState = resetBtnReading;
       if (resetBtnReading == HIGH) {
-        stopwatch = 0; 
+        stopwatch = 0;
       }
     }
   }
@@ -131,27 +137,25 @@ void handleStartStop() {
   interruptTime = micros();
   if (interruptTime - lastInterruptTime > debounceTime * 1000) {
     timerIsStarted = !timerIsStarted;
-    resetBtnEnabled = !resetBtnEnabled;
-    canSaveLaps = !canSaveLaps;
   }
   lastInterruptTime = interruptTime;
 }
 
 void handleLap() {
   static unsigned long interruptTime = 0;
-  if(savedLaps > maxLaps){
-      currentLapNumber = 0; //we overwrite the saved laps is we exceed the limit
-      savedLaps = 1;
-      Serial.println("Overwriting laps");
-    }
+  if (savedLaps > maxLaps) {
+    currentLapNumber = 0;  //we overwrite the saved laps is we exceed the limit
+    savedLaps = 1;
+    //Serial.println("Overwriting laps");
+  }
   interruptTime = micros();
   if ((interruptTime - lastInterruptTime > debounceTime * 1000) && canSaveLaps == true) {
-    laps[currentLapNumber] = stopwatch; //save the current time displayed
-    savedLaps +=1;
-    currentLapNumber+=1;
+    laps[currentLapNumber] = stopwatch;  //save the current time displayed
+    savedLaps += 1;
+    currentLapNumber += 1;
   }
   lastInterruptTime = interruptTime;
-  for(int i=0; i<maxLaps; i++){
+  for (int i = 0; i < maxLaps; i++) {
     Serial.println(laps[i]);
   }
 }
