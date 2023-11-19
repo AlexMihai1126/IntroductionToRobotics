@@ -32,6 +32,9 @@ void setup() {
   pinMode(ledRPin, OUTPUT);
   pinMode(ledGPin, OUTPUT);
   pinMode(ledBPin, OUTPUT);
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+  pinMode(lightSensorPin, INPUT);
 }
 
 int readDistance(){
