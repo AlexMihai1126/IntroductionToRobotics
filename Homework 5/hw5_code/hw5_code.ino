@@ -1,6 +1,7 @@
 #include <EEPROM.h>
 #include "DHT.h"  //include the temperature and humidity sensor library
 #define clearEEPROM false
+#define storeDefaultsEEPROM false
 #define ledRPin 11
 #define ledGPin 10
 #define ledBPin 9
@@ -24,6 +25,7 @@
 #define loggedValues 10
 #define tempDefault 25
 #define humidityDefault 50
+#define multiplyToMsec 1000
 
 short updateRate = 10;  //default update value is 10 seconds
 short distanceMinVal = 5;
@@ -45,6 +47,9 @@ short readValueMax = 0;
 short value1 = 0;
 short value2 = 0;
 short value3 = 0;
+short logId = 0;
+
+unsigned long prevMillisRefresh = 0;
 
 enum storedParameters {
   UPDATE_RATE,
@@ -79,7 +84,7 @@ bool isTempOutOfRange = false;
 bool isHumidityOutOfRange = false;
 bool isDistanceOutOfRange = false;
 bool isLightOutOfRange = false;
-bool ledAutoMode = false;
+bool ledAutoMode = true;
 bool inputSucceded = true;  //we assume input succeeds, we make it false on the way if something goes wrong
 bool showValuesToConsole = false;
 
@@ -94,6 +99,22 @@ void setup() {
     for (int i = 0; i < EEPROM.length(); i++) {
       EEPROM.update(i, 0);
     }
+  }
+
+  if(storeDefaultsEEPROM == true){
+    EEPROM.update(adresses[UPDATE_RATE],updateRate);
+    EEPROM.update(adresses[DIST_MIN], distanceMinVal);
+    EEPROM.update(adresses[DIST_MAX], distanceMaxVal);
+    EEPROM.update(adresses[TEMP_MIN], tempMinVal);
+    EEPROM.update(adresses[TEMP_MAX], tempMaxVal);
+    EEPROM.update(adresses[HUM_MIN], humidityMinVal);
+    EEPROM.update(adresses[HUM_MAX], humidityMaxVal);
+    EEPROM.update(adresses[LIGHT_MIN], lightMinVal);
+    EEPROM.update(adresses[LIGHT_MAX], lightMaxVal);
+    EEPROM.update(adresses[LED_MODE], ledAutoMode);
+    EEPROM.update(adresses[LED_R_VAL], minimumValue);
+    EEPROM.update(adresses[LED_G_VAL], minimumValue);
+    EEPROM.update(adresses[LED_B_VAL], minimumValue);
   }
   Serial.begin(9600);
   dht.begin();  //initialize the temp and humidity sensor
@@ -119,7 +140,7 @@ void setup() {
 }
 
 void loop() {
-
+  //Part of the loop was written with ChatGPT
   Serial.flush();  // Clear the serial buffer
 
   switch (currentState) {
@@ -163,7 +184,8 @@ void loop() {
       handleRGBLEDControlInput();
       break;
   }
-  delay(100);
+  readSensors();
+  ledControl();
 }
 
 
@@ -199,20 +221,52 @@ void readTempAndHumidity(int &temp, int &humidity) {
 }
 
 void readSensors() {
-  int distance = readDistance();
-  int light = readLightValue();
+  if (logId > loggedValues) {
+    logId = 0;  //reset and overwrite previous stored values
+  }
   int hum = 0;
   int tmp = 0;
-  readTempAndHumidity(tmp, hum);
-  if (showValuesToConsole == true) {
-    Serial.print("Distance: ");
-    Serial.println(distance);
-    Serial.print("Light: ");
-    Serial.println(light);
-    Serial.print("Temp: ");
-    Serial.println(tmp);
-    Serial.print("Humidity: ");
-    Serial.println(hum);
+
+  if ((millis() - prevMillisRefresh) >= (updateRate * multiplyToMsec)) {
+    prevMillisRefresh = millis();
+    readTempAndHumidity(tmp, hum);
+    distanceLoggedValues[logId] = readDistance();
+    lightLoggedValues[logId] = readLightValue();
+    tempLoggedValues[logId] = tmp;
+    humidityLoggedValues[logId] = hum;
+    if (distanceLoggedValues[logId] < distanceMinVal && distanceLoggedValues[logId] > distanceMaxVal) {
+      isDistanceOutOfRange = true;
+    } else {
+      isDistanceOutOfRange = false;
+    }
+    if (tempLoggedValues[logId] < tempMinVal && tempLoggedValues[logId] > tempMaxVal) {
+      isTempOutOfRange = true;
+    } else {
+      isTempOutOfRange = false;
+    }
+    if (humidityLoggedValues[logId] < humidityMinVal && humidityLoggedValues[logId] > humidityMaxVal) {
+      isHumidityOutOfRange = true;
+    } else {
+      isHumidityOutOfRange = false;
+    }
+    if (lightLoggedValues[logId] < lightMinVal && lightLoggedValues[logId] > lightMaxVal) {
+      isLightOutOfRange = true;
+    } else {
+      isLightOutOfRange = false;
+    }
+
+    if (showValuesToConsole == true) {
+      Serial.println(F("Press 1 to exit data display mode."));
+      Serial.print("Distance: ");
+      Serial.println(distanceLoggedValues[logId]);
+      Serial.print("Light: ");
+      Serial.println(lightLoggedValues[logId]);
+      Serial.print("Temp: ");
+      Serial.println(tempLoggedValues[logId]);
+      Serial.print("Humidity: ");
+      Serial.println(humidityLoggedValues[logId]);
+    }
+    logId += 1;
   }
 }
 
@@ -242,6 +296,26 @@ void eraseLoggerData() {
     lightLoggedValues[i] = 0;
     tempLoggedValues[i] = 0;
     humidityLoggedValues[i] = 0;
+  }
+  Serial.println("Log data cleared.");
+}
+
+void ledControl() {
+  if (ledAutoMode == true) {
+    if (isDistanceOutOfRange || isHumidityOutOfRange || isLightOutOfRange || isTempOutOfRange) {
+      digitalWrite(ledRPin, HIGH);
+      digitalWrite(ledGPin, LOW);
+      digitalWrite(ledBPin, LOW);
+    } else {
+      digitalWrite(ledGPin, HIGH);
+      digitalWrite(ledRPin, LOW);
+      digitalWrite(ledBPin, LOW);
+    }
+
+  } else {
+    analogWrite(ledRPin, ledValues[ledRIndex]);
+    analogWrite(ledGPin, ledValues[ledGIndex]);
+    analogWrite(ledBPin, ledValues[ledBIndex]);
   }
 }
 
@@ -301,6 +375,7 @@ void handleSensorSettingsInput() {
           Serial.read();
         }
         Serial.println("Sampling interval set to: " + String(updateRate) + " seconds");
+        EEPROM.update(adresses[UPDATE_RATE], updateRate);
         currentState = SENSOR_SETTINGS;
         sensorSettingsPrinted = false;
         break;
@@ -523,7 +598,7 @@ void handleResetLoggerInput() {
     switch (userInput) {
       case 1:
         eraseLoggerData();
-        currentState = RESET_LOGGER;
+        currentState = MAIN_MENU;
         resetLoggerPrinted = false;
         break;
       case 2:
@@ -580,7 +655,7 @@ void handleSystemStatusInput() {
         break;
       case 3:
         for (int i = 0; i < loggedValues; i++) {
-          Serial.println("Log " + String(i) + " :" + "Distance (cm): " + String(distanceLoggedValues[i]) + "Light(%): " + String(lightLoggedValues[i]) + "Temperature(degrees C): " + String(tempLoggedValues[i]) + "Humidity(%): " + String(humidityLoggedValues[i]));
+          Serial.println("Log " + String(i + 1) + " :" + "Distance (cm): " + String(distanceLoggedValues[i]) + " " + "Light(%): " + String(lightLoggedValues[i]) + " " + "Temperature(degrees C): " + String(tempLoggedValues[i]) + " " + "Humidity(%): " + String(humidityLoggedValues[i]) + " ");
         }
         currentState = SYSTEM_STATUS;
         systemStatusPrinted = false;
