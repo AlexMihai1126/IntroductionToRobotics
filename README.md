@@ -51,3 +51,12 @@ Image of the setup: ![](https://github.com/AlexMihai1126/IntroductionToRobotics/
 Video of the setup: https://youtu.be/aYq58uCmPIw
 
 ## Homework 5
+Task given was to implement a data logger and monitor for a few sensors (distance, light, and bonus temperature and humidity) and control an RGB LED (if it's set to Auto it's green if all sensors are within the set ranges, but turns red if any of the sensors are out of range and of set to Manual you can set the desired color via 3 parameters (Red,Green and Blue). All configuration data is stored in the EEPROM of the Arduino. You can configure the update rate of the sensors (in seconds), the maximum threshold (in my implementation) of the sensors and the LED mode.
+
+Components used: Ultrasonic distance sensor (1x), photocell (1x) along with a 10K resistor for it, an RGB LED (and 1x 330 ohm resistors for each of the channels - for a total of 3) and a combined temperature/humidity sensor I had from a previous project (DHT11).
+
+The code file is in the folder "Homework 5". Please note that the first iteration was meant to be able to choose both a minimum and maximum value for each sensor, but the input method did not work as expected so I made a clone of the project and reverted to using just max values, however I plan to fully debug the more complex version of the code for my own learning. The RGB LED control does not fully work due to a bug in the function.
+
+Image of the setup: ![]()
+
+Video of the setup: 
