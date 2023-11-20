@@ -26,6 +26,8 @@
 #define tempDefault 25
 #define humidityDefault 50
 #define multiplyToMsec 1000
+#define expectedValuesRGB 3
+#define expectedValuesMinMax 2
 
 short updateRate = 10;  //default update value is 10 seconds
 short distanceMinVal = 5;
@@ -48,6 +50,8 @@ short value1 = 0;
 short value2 = 0;
 short value3 = 0;
 short logId = 0;
+
+int parsedValues = 0;
 
 unsigned long prevMillisRefresh = 0;
 
@@ -94,6 +98,7 @@ bool resetLoggerPrinted = false;
 bool systemStatusPrinted = false;
 bool rgbLedControlPrinted = false;
 
+
 void setup() {
   if (clearEEPROM == true) {
     for (int i = 0; i < EEPROM.length(); i++) {
@@ -101,8 +106,8 @@ void setup() {
     }
   }
 
-  if(storeDefaultsEEPROM == true){
-    EEPROM.update(adresses[UPDATE_RATE],updateRate);
+  if (storeDefaultsEEPROM == true) {
+    EEPROM.update(adresses[UPDATE_RATE], updateRate);
     EEPROM.update(adresses[DIST_MIN], distanceMinVal);
     EEPROM.update(adresses[DIST_MAX], distanceMaxVal);
     EEPROM.update(adresses[TEMP_MIN], tempMinVal);
@@ -140,9 +145,8 @@ void setup() {
 }
 
 void loop() {
-  //Part of the loop was written with ChatGPT
+  //Part of the loop was written with ChatGPT{
   Serial.flush();  // Clear the serial buffer
-
   switch (currentState) {
     case MAIN_MENU:
       if (!mainMenuPrinted) {
@@ -184,6 +188,7 @@ void loop() {
       handleRGBLEDControlInput();
       break;
   }
+
   readSensors();
   ledControl();
 }
@@ -388,47 +393,45 @@ void handleSensorSettingsInput() {
         }
 
         inputSucceded = true;
+        String data1 = Serial.readStringUntil('\n');
         Serial.flush();
-        readValueMin = Serial.parseInt();
-        // Clear the remaining characters in the serial buffer
-        while (Serial.available() > 0) {
-          Serial.read();
-        }
+        parsedValues = sscanf(data1.c_str(), "%d,%d", &readValueMin, &readValueMax);
 
-        if (!isDistanceValidValue(readValueMin)) {
-          Serial.println("Error: Minimum is out of range (0-255)");
+        if (parsedValues != expectedValuesMinMax) {
+          Serial.println(F("Error: Incorrect input format"));
           inputSucceded = false;
+          currentState = SENSOR_SETTINGS;
+          sensorSettingsPrinted = false;
           return;
-        }
+        } else {
+          if (!isDistanceValidValue(readValueMin)) {
+            Serial.println("Error: Minimum is out of range (0-255)");
+            inputSucceded = false;
+            currentState = SENSOR_SETTINGS;
+            sensorSettingsPrinted = false;
+            return;
+          }
 
-        if (Serial.read() != ',') {
-          Serial.println("Error: Incorrect input format");
-          inputSucceded = false;
-          return;
-        }
-        Serial.flush();
-        readValueMax = Serial.parseInt();
-        // Clear the remaining characters in the serial buffer
-        while (Serial.available() > 0) {
-          Serial.read();
-        }
+          if (!isDistanceValidValue(readValueMax)) {
+            Serial.println("Error: Maximum is out of range (0-255)");
+            inputSucceded = false;
+            currentState = SENSOR_SETTINGS;
+            sensorSettingsPrinted = false;
+            return;
+          }
 
-        if (!isDistanceValidValue(readValueMax)) {
-          Serial.println("Error: Maximum is out of range (0-255)");
-          inputSucceded = false;
-          return;
-        }
-        if (inputSucceded == true) {  //we update the values only if the input succeds (same for the other functions)
-          distanceMinVal = readValueMin;
-          distanceMaxVal = readValueMax;
-          Serial.println("Minimum value set to: " + String(distanceMinVal) + " cm " + "and maximum value set to: " + String(distanceMinVal) + " cm ");
-          EEPROM.update(adresses[DIST_MIN], distanceMinVal);
-          EEPROM.update(adresses[DIST_MAX], distanceMaxVal);
+          if (inputSucceded == true) {  //we update the values only if the input succeds (same for the other functions)
+            distanceMinVal = readValueMin;
+            distanceMaxVal = readValueMax;
+            Serial.println("Minimum value set to: " + String(distanceMinVal) + " cm " + "and maximum value set to: " + String(distanceMinVal) + " cm ");
+            EEPROM.update(adresses[DIST_MIN], distanceMinVal);
+            EEPROM.update(adresses[DIST_MAX], distanceMaxVal);
+          }
         }
         currentState = SENSOR_SETTINGS;
         sensorSettingsPrinted = false;
         break;
-      case 3:
+      case 3:  //corrected
         // Handle light sensor threshold settingss
         Serial.println("Enter light minimum and maximum values in the format min,max: ");
         while (!Serial.available()) {
@@ -437,137 +440,129 @@ void handleSensorSettingsInput() {
 
         inputSucceded = true;
         Serial.flush();
-        readValueMin = Serial.parseInt();
-        // Clear the remaining characters in the serial buffer
-        while (Serial.available() > 0) {
-          Serial.read();
-        }
+        String data2 = Serial.readStringUntil('\n');
+        parsedValues = sscanf(data2.c_str(), "%d,%d", &readValueMin, &readValueMax);
 
-        if (!isLightValidValue(readValueMin)) {
-          Serial.println("Error: Minimum is out of range (0-100)");
+        if (parsedValues != expectedValuesMinMax) {
+          Serial.println(F("Error: Incorrect input format"));
           inputSucceded = false;
+          currentState = SENSOR_SETTINGS;
+          sensorSettingsPrinted = false;
           return;
-        }
+        } else {
+          if (!isLightValidValue(readValueMin)) {
+            Serial.println("Error: Minimum is out of range (0-100)");
+            inputSucceded = false;
+            currentState = SENSOR_SETTINGS;
+            sensorSettingsPrinted = false;
+            return;
+          }
 
-        if (Serial.read() != ',') {
-          Serial.println("Error: Incorrect input format");
-          inputSucceded = false;
-          return;
-        }
-        Serial.flush();
-        readValueMax = Serial.parseInt();
-        // Clear the remaining characters in the serial buffer
-        while (Serial.available() > 0) {
-          Serial.read();
-        }
+          if (!isLightValidValue(readValueMax)) {
+            Serial.println("Error: Maximum is out of range (0-100)");
+            inputSucceded = false;
+            currentState = SENSOR_SETTINGS;
+            sensorSettingsPrinted = false;
+            return;
+          }
 
-        if (!isLightValidValue(readValueMax)) {
-          Serial.println("Error: Maximum is out of range (0-100)");
-          inputSucceded = false;
-          return;
-        }
-        if (inputSucceded == true) {  //we update the values only if the input succeds (same for the other functions)
-          lightMinVal = readValueMin;
-          lightMaxVal = readValueMax;
-          Serial.println("Minimum value set to: " + String(lightMinVal) + " % " + "and maximum value set to: " + String(lightMaxVal) + " % ");
-          EEPROM.update(adresses[LIGHT_MIN], lightMinVal);
-          EEPROM.update(adresses[LIGHT_MAX], lightMaxVal);
+          if (inputSucceded == true) {  //we update the values only if the input succeds (same for the other functions)
+            lightMinVal = readValueMin;
+            lightMaxVal = readValueMax;
+            Serial.println("Minimum value set to: " + String(lightMinVal) + " % " + "and maximum value set to: " + String(lightMaxVal) + " % ");
+            EEPROM.update(adresses[LIGHT_MIN], lightMinVal);
+            EEPROM.update(adresses[LIGHT_MAX], lightMaxVal);
+          }
         }
         currentState = SENSOR_SETTINGS;
         sensorSettingsPrinted = false;
         break;
-      case 4:
+      case 4:  //corrected
         // Handle temperature sensor threshold settings
         Serial.println("Enter temperature minimum and maximum values in the format min,max: ");
         while (!Serial.available()) {
           // Wait for user input
         }
-
+        String data3 = Serial.readStringUntil('\n');
         inputSucceded = true;
         Serial.flush();
-        readValueMin = Serial.parseInt();
-        // Clear the remaining characters in the serial buffer
-        while (Serial.available() > 0) {
-          Serial.read();
-        }
+        parsedValues = sscanf(data3.c_str(), "%d,%d", &readValueMin, &readValueMax);
 
-        if (!isTmpValidValue(readValueMin)) {
-          Serial.println("Error: Minimum is out of range (0-50)");
-          inputSucceded = false;
-          return;
-        }
-
-        if (Serial.read() != ',') {
+        if (parsedValues != expectedValuesMinMax) {
           Serial.println(F("Error: Incorrect input format"));
           inputSucceded = false;
+          currentState = SENSOR_SETTINGS;
+          sensorSettingsPrinted = false;
           return;
-        }
-        Serial.flush();
-        readValueMax = Serial.parseInt();
-        // Clear the remaining characters in the serial buffer
-        while (Serial.available() > 0) {
-          Serial.read();
-        }
+        } else {
+          if (!isTmpValidValue(readValueMin)) {
+            Serial.println("Error: Minimum is out of range (0-50)");
+            inputSucceded = false;
+            currentState = SENSOR_SETTINGS;
+            sensorSettingsPrinted = false;
+            return;
+          }
 
-        if (!isTmpValidValue(readValueMax)) {
-          Serial.println(F("Error: Maximum is out of range (0-50)"));
-          inputSucceded = false;
-          return;
-        }
-        if (inputSucceded == true) {  //we update the values only if the input succeds (same for the other functions)
-          tempMinVal = readValueMin;
-          tempMaxVal = readValueMax;
-          Serial.println("Minimum value set to: " + String(tempMinVal) + " degrees C " + "and maximum value set to: " + String(tempMaxVal) + " degrees C ");
-          EEPROM.update(adresses[TEMP_MIN], tempMinVal);
-          EEPROM.update(adresses[TEMP_MAX], tempMaxVal);
+          if (!isTmpValidValue(readValueMax)) {
+            Serial.println(F("Error: Maximum is out of range (0-50)"));
+            inputSucceded = false;
+            currentState = SENSOR_SETTINGS;
+            sensorSettingsPrinted = false;
+            return;
+          }
+          if (inputSucceded == true) {  //we update the values only if the input succeds (same for the other functions)
+            tempMinVal = readValueMin;
+            tempMaxVal = readValueMax;
+            Serial.println("Minimum value set to: " + String(tempMinVal) + " degrees C " + "and maximum value set to: " + String(tempMaxVal) + " degrees C ");
+            EEPROM.update(adresses[TEMP_MIN], tempMinVal);
+            EEPROM.update(adresses[TEMP_MAX], tempMaxVal);
+          }
         }
         currentState = SENSOR_SETTINGS;
         sensorSettingsPrinted = false;
         break;
-      case 5:
+      case 5:  //corrected
         // Handle humidity sensor threshold settings
         Serial.println(F("Enter humidity minimum and maximum values in the format min,max: "));
         while (!Serial.available()) {
           // Wait for user input
         }
-
+        String data4 = Serial.readStringUntil('\n');
         inputSucceded = true;
+
         Serial.flush();
-        readValueMin = Serial.parseInt();
-        // Clear the remaining characters in the serial buffer
-        while (Serial.available() > 0) {
-          Serial.read();
-        }
 
-        if (!isHumidityValidValue(readValueMin)) {
-          Serial.println(F("Error: Minimum is out of range (0-100)"));
-          inputSucceded = false;
-          return;
-        }
+        parsedValues = sscanf(data4.c_str(), "%d,%d", &readValueMin, &readValueMax);
 
-        if (Serial.read() != ',') {
+        if (parsedValues != expectedValuesMinMax) {
           Serial.println(F("Error: Incorrect input format"));
           inputSucceded = false;
+          currentState = SENSOR_SETTINGS;
+          sensorSettingsPrinted = false;
           return;
-        }
-        Serial.flush();
-        readValueMax = Serial.parseInt();
-        // Clear the remaining characters in the serial buffer
-        while (Serial.available() > 0) {
-          Serial.read();
-        }
+        } else {
+          if (!isHumidityValidValue(readValueMin)) {
+            Serial.println(F("Error: Minimum is out of range (0-100)"));
+            inputSucceded = false;
+            currentState = SENSOR_SETTINGS;
+            sensorSettingsPrinted = false;
+            return;
+          }
 
-        if (!isHumidityValidValue(readValueMax)) {
-          Serial.println(F("Error: Maximum is out of range (0-100)"));
-          inputSucceded = false;
-          return;
-        }
-        if (inputSucceded == true) {  //we update the values only if the input succeds (same for the other functions)
-          humidityMinVal = readValueMin;
-          humidityMaxVal = readValueMax;
-          Serial.println("Minimum value set to: " + String(humidityMinVal) + " % " + "and maximum value set to: " + String(humidityMaxVal) + " % ");
-          EEPROM.update(adresses[HUM_MIN], humidityMinVal);
-          EEPROM.update(adresses[HUM_MAX], humidityMaxVal);
+          if (!isHumidityValidValue(readValueMax)) {
+            Serial.println(F("Error: Maximum is out of range (0-100)"));
+            inputSucceded = false;
+            currentState = SENSOR_SETTINGS;
+            sensorSettingsPrinted = false;
+            return;
+          }
+          if (inputSucceded == true) {  //we update the values only if the input succeds (same for the other functions)
+            humidityMinVal = readValueMin;
+            humidityMaxVal = readValueMax;
+            Serial.println("Minimum value set to: " + String(humidityMinVal) + " % " + "and maximum value set to: " + String(humidityMaxVal) + " % ");
+            EEPROM.update(adresses[HUM_MIN], humidityMinVal);
+            EEPROM.update(adresses[HUM_MAX], humidityMaxVal);
+          }
         }
         currentState = SENSOR_SETTINGS;
         sensorSettingsPrinted = false;
@@ -675,6 +670,7 @@ void handleSystemStatusInput() {
 
 void handleRGBLEDControlInput() {
   if (Serial.available() > 0) {
+
     Serial.flush();
     short userInput = Serial.parseInt();
     // Clear the remaining characters in the serial buffer
@@ -686,70 +682,55 @@ void handleRGBLEDControlInput() {
       case 1:
         // Manual color control
         inputSucceded = true;
+        String data5 = Serial.readStringUntil('\n');
         Serial.println(F("Enter RGB values (comma-separated): "));
         while (!Serial.available()) {
           // Wait for user input
         }
-        Serial.flush();
-        value1 = Serial.parseInt();
-        // Clear the remaining characters in the serial buffer
-        while (Serial.available() > 0) {
-          Serial.read();
-        }
-        if (!isLEDValidValue(value1)) {
-          Serial.println(F("Error: Value 1 is out of range (0-255)"));
+        parsedValues = sscanf(data5.c_str(), "%d,%d,%d", &value1, &value2, &value3);
+        if (parsedValues != expectedValuesRGB) {
+          Serial.println(F("Error: wrong format."));
           inputSucceded = false;
+          currentState = RGB_LED_CONTROL;
+          rgbLedControlPrinted = false;
           return;
+        } else {
+          if (!isLEDValidValue(value1)) {
+            Serial.println(F("Error: Value 1 is out of range (0-255)"));
+            inputSucceded = false;
+            currentState = RGB_LED_CONTROL;
+            rgbLedControlPrinted = false;
+            return;
+          }
+
+          if (!isLEDValidValue(value2)) {
+            Serial.println(F("Error: Value 2 is out of range (0-255)"));
+            inputSucceded = false;
+            currentState = RGB_LED_CONTROL;
+            rgbLedControlPrinted = false;
+            return;
+          }
+          if (!isLEDValidValue(value3)) {
+            Serial.println(F("Error: Value 3 is out of range (0-255)"));
+            inputSucceded = false;
+            currentState = RGB_LED_CONTROL;
+            rgbLedControlPrinted = false;
+            return;
+          }
+
+          if (inputSucceded == true) {
+            ledAutoMode = false;
+            ledValues[ledRIndex] = value1;
+            ledValues[ledGIndex] = value2;
+            ledValues[ledBIndex] = value3;
+            Serial.println("RGB values set to: " + String(ledValues[ledRIndex]) + "," + String(ledValues[ledGIndex]) + "," + String(ledValues[ledBIndex]));
+            EEPROM.update(adresses[LED_R_VAL], ledValues[ledRIndex]);
+            EEPROM.update(adresses[LED_G_VAL], ledValues[ledGIndex]);
+            EEPROM.update(adresses[LED_B_VAL], ledValues[ledBIndex]);
+            EEPROM.update(adresses[LED_MODE], ledAutoMode);
+          }
         }
 
-        // Check for the comma separator
-        if (Serial.read() != ',') {
-          Serial.println(F("Error: Incorrect input format"));
-          inputSucceded = false;
-          return;
-        }
-        Serial.flush();
-        value2 = Serial.parseInt();
-        // Clear the remaining characters in the serial buffer
-        while (Serial.available() > 0) {
-          Serial.read();
-        }
-        if (!isLEDValidValue(value2)) {
-          Serial.println(F("Error: Value 2 is out of range (0-255)"));
-          inputSucceded = false;
-          return;
-        }
-        if (Serial.read() != ',') {
-          Serial.println(F("Error: Incorrect input format"));
-          inputSucceded = false;
-          return;
-        }
-        Serial.flush();
-        value3 = Serial.parseInt();
-        // Clear the remaining characters in the serial buffer
-        while (Serial.available() > 0) {
-          Serial.read();
-        }
-        if (!isLEDValidValue(value3)) {
-          Serial.println(F("Error: Value 3 is out of range (0-255)"));
-          inputSucceded = false;
-          return;
-        }
-        if (Serial.read() != '\n') {
-          Serial.println(F("Error: Incorrect input format"));
-          inputSucceded = false;
-          return;
-        }
-
-        if (inputSucceded == true) {
-          ledValues[ledRIndex] = value1;
-          ledValues[ledGIndex] = value2;
-          ledValues[ledBIndex] = value3;
-        }
-        Serial.println("RGB values set to: " + String(ledValues[ledRIndex]) + "," + String(ledValues[ledGIndex]) + "," + String(ledValues[ledBIndex]));
-        EEPROM.update(adresses[LED_R_VAL], ledValues[ledRIndex]);
-        EEPROM.update(adresses[LED_G_VAL], ledValues[ledGIndex]);
-        EEPROM.update(adresses[LED_B_VAL], ledValues[ledBIndex]);
         currentState = RGB_LED_CONTROL;
         rgbLedControlPrinted = false;
         break;
