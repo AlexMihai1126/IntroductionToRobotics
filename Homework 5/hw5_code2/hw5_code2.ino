@@ -54,8 +54,6 @@ short value3 = 0;
 short logId = 0;
 short userInput = 0;
 
-int parsedValues = 0;
-
 unsigned long prevMillisRefresh = 0;
 
 enum storedParameters {
