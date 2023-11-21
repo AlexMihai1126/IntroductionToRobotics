@@ -55,8 +55,8 @@ Task given was to implement a data logger and monitor for a few sensors (distanc
 
 Components used: Ultrasonic distance sensor (1x), photocell (1x) along with a 10K resistor for it, an RGB LED (and 1x 330 ohm resistors for each of the channels - for a total of 3) and a combined temperature/humidity sensor I had from a previous project (DHT11).
 
-The code file is in the folder "Homework 5". Please note that the first iteration was meant to be able to choose both a minimum and maximum value for each sensor, but the input method did not work as expected so I made a clone of the project and reverted to using just max values, however I plan to fully debug the more complex version of the code for my own learning. The RGB LED control does not fully work due to a bug in the function.
+The code file is in the folder "Homework 5/hw5_code2". Please note that the first iteration was meant to be able to choose both a minimum and maximum value for each sensor, but the input method did not work as expected so I made a clone of the project and reverted to using just max values, however I plan to fully debug the more complex version of the code for my own learning. The RGB LED control does not fully work due to a bug in the function.
 
-Image of the setup: ![]()
+Image of the setup: ![](https://github.com/AlexMihai1126/IntroductionToRobotics/blob/main/Homework%205/image/20231120_200857510_iOS.jpg)
 
-Video of the setup: 
+Video of the setup: https://youtu.be/LGYc3vCyYwg
