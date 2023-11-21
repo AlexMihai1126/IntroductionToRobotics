@@ -363,12 +363,15 @@ void handleMainMenuInput() {
         mainMenuPrinted = false;
         break;
     }
+    while (Serial.available() > 0) {
+      Serial.read();
+    }
   }
 }
 
 void handleSensorSettingsInput() {
   if (Serial.available() > 0) {
-    
+
     userInput = Serial.parseInt();
     // Clear the remaining characters in the serial buffer
     while (Serial.available() > 0) {
@@ -377,7 +380,7 @@ void handleSensorSettingsInput() {
     switch (userInput) {
       case 1:
         // Prompt user for the sampling interval and update the variable
-        
+
         Serial.println("Enter sampling interval (1-10 seconds): ");
         while (!Serial.available()) {
           // Wait for user input
@@ -408,7 +411,7 @@ void handleSensorSettingsInput() {
 
       case 2:
         // Handle distance sensor threshold settings
-        
+
         Serial.println("Enter distance maximum value: ");
         while (!Serial.available()) {
           // Wait for user input
@@ -440,7 +443,7 @@ void handleSensorSettingsInput() {
         break;
       case 3:  //corrected
         // Handle light sensor threshold settings
-        
+
         Serial.println("Enter light maximum value: ");
         while (!Serial.available()) {
           // Wait for user input
@@ -474,7 +477,7 @@ void handleSensorSettingsInput() {
         break;
       case 4:  //corrected
         // Handle temperature sensor threshold settings
-        
+
         Serial.println("Enter temperature maximum value: ");
         while (!Serial.available()) {
           // Wait for user input
@@ -505,7 +508,7 @@ void handleSensorSettingsInput() {
         break;
       case 5:  //corrected
         // Handle humidity sensor threshold settings
-        
+
         Serial.println(F("Enter humidity maximum value: "));
         while (!Serial.available()) {
           // Wait for user input
@@ -550,6 +553,9 @@ void handleSensorSettingsInput() {
         currentState = SENSOR_SETTINGS;
         sensorSettingsPrinted = false;
     }
+    while (Serial.available() > 0) {
+      Serial.read();
+    }
   }
 }
 
@@ -578,6 +584,9 @@ void handleResetLoggerInput() {
         resetLoggerPrinted = false;
         break;
     }
+  }
+  while (Serial.available() > 0) {
+    Serial.read();
   }
 }
 
@@ -637,6 +646,9 @@ void handleSystemStatusInput() {
         break;
     }
   }
+  while (Serial.available() > 0) {
+    Serial.read();
+  }
 }
 
 void handleRGBLEDControlInput() {
@@ -651,7 +663,7 @@ void handleRGBLEDControlInput() {
     switch (userInput) {
       case 1:
         // Manual color control
-        
+
 
         Serial.println(F("Enter R value: "));
         while (!Serial.available()) {
@@ -760,6 +772,9 @@ void handleRGBLEDControlInput() {
         inputHasBeenRead = false;
         break;
     }
+  }
+  while (Serial.available() > 0) {
+    Serial.read();
   }
 }
 
