@@ -791,7 +791,7 @@ void printSensorSettingsMenu() {
   Serial.println(F("1.2 Distance sensor maximum threshold."));
   Serial.println(F("1.3 Light sensor maximum threshold."));
   Serial.println(F("1.4 Temperature sensor maximum threshold."));
-  Serial.println(F("1.5 Humidity sensormaximum threshold."));
+  Serial.println(F("1.5 Humidity sensor maximum threshold."));
   Serial.println(F("1.6 Back"));
 }
 
