@@ -83,7 +83,7 @@ enum menuState {
   MANUAL_COLOR_CONTROL,
 };
 
-menuState currentState = MAIN_MENU;  //static makes the variable's value persistent
+menuState currentState = MAIN_MENU;
 
 DHT dht(tempHumidityPin, DHTTYPE);
 
