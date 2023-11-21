@@ -28,7 +28,8 @@
 #define multiplyToMsec 1000
 #define expectedValuesRGB 3
 #define expectedValuesMinMax 2
-#define timeoutDuration 5000
+#define updateValueMax 10
+#define updateValueMin 1
 
 short updateRate = 10;  //default update value is 10 seconds
 short distanceMinVal = 5;
@@ -56,7 +57,6 @@ short userInput = 0;
 int parsedValues = 0;
 
 unsigned long prevMillisRefresh = 0;
-unsigned long startTime = 0;
 
 enum storedParameters {
   UPDATE_RATE,
@@ -298,6 +298,10 @@ bool isLightValidValue(int val) {
   return (val >= minimumValue && val <= maxLightValue);
 }  //check the value is between the constants defined at the start of the program
 
+bool isSamplingValueValid(int val) {
+  return (val >= updateValueMin && val <= updateValueMax);
+}
+
 void eraseLoggerData() {
   for (int i = 0; i < loggedValues; i++) {
     distanceLoggedValues[i] = 0;
@@ -305,6 +309,7 @@ void eraseLoggerData() {
     tempLoggedValues[i] = 0;
     humidityLoggedValues[i] = 0;
   }
+  logId = 0;
   Serial.println("Log data cleared.");
 }
 
@@ -331,7 +336,6 @@ void ledControl() {
 void handleMainMenuInput() {
 
   if (Serial.available() > 0) {
-    Serial.flush();
     userInput = Serial.parseInt();
     // Clear the remaining characters in the serial buffer
     while (Serial.available() > 0) {
@@ -364,7 +368,7 @@ void handleMainMenuInput() {
 
 void handleSensorSettingsInput() {
   if (Serial.available() > 0) {
-    Serial.flush();
+    
     userInput = Serial.parseInt();
     // Clear the remaining characters in the serial buffer
     while (Serial.available() > 0) {
@@ -373,30 +377,43 @@ void handleSensorSettingsInput() {
     switch (userInput) {
       case 1:
         // Prompt user for the sampling interval and update the variable
+        
         Serial.println("Enter sampling interval (1-10 seconds): ");
         while (!Serial.available()) {
           // Wait for user input
         }
+        inputSucceded = true;
         updateRate = Serial.parseInt();
         // Clear the remaining characters in the serial buffer
         while (Serial.available() > 0) {
           Serial.read();
         }
-        Serial.println("Sampling interval set to: " + String(updateRate) + " seconds");
-        EEPROM.update(adresses[UPDATE_RATE], updateRate);
+
+        if (!isSamplingValueValid(updateRate)) {
+          Serial.println("Error: Maximum is out of range (1-10)");
+          inputSucceded = false;
+          currentState = SENSOR_SETTINGS;
+          sensorSettingsPrinted = false;
+          return;
+        }
+
+        if (inputSucceded == true) {
+          Serial.println("Sampling interval set to: " + String(updateRate) + " seconds");
+          EEPROM.update(adresses[UPDATE_RATE], updateRate);
+        }
+
         currentState = SENSOR_SETTINGS;
         sensorSettingsPrinted = false;
         break;
 
       case 2:
         // Handle distance sensor threshold settings
+        
         Serial.println("Enter distance maximum value: ");
         while (!Serial.available()) {
           // Wait for user input
         }
-
         inputSucceded = true;
-        Serial.flush();
         readValueMax = Serial.parseInt();
         // Clear the remaining characters in the serial buffer
         while (Serial.available() > 0) {
@@ -423,13 +440,12 @@ void handleSensorSettingsInput() {
         break;
       case 3:  //corrected
         // Handle light sensor threshold settings
+        
         Serial.println("Enter light maximum value: ");
         while (!Serial.available()) {
           // Wait for user input
         }
-
         inputSucceded = true;
-        Serial.flush();
         readValueMax = Serial.parseInt();
         // Clear the remaining characters in the serial buffer
         while (Serial.available() > 0) {
@@ -458,6 +474,7 @@ void handleSensorSettingsInput() {
         break;
       case 4:  //corrected
         // Handle temperature sensor threshold settings
+        
         Serial.println("Enter temperature maximum value: ");
         while (!Serial.available()) {
           // Wait for user input
@@ -488,14 +505,12 @@ void handleSensorSettingsInput() {
         break;
       case 5:  //corrected
         // Handle humidity sensor threshold settings
+        
         Serial.println(F("Enter humidity maximum value: "));
         while (!Serial.available()) {
           // Wait for user input
         }
-
         inputSucceded = true;
-
-        Serial.flush();
         readValueMax = Serial.parseInt();
         // Clear the remaining characters in the serial buffer
         while (Serial.available() > 0) {
@@ -517,6 +532,10 @@ void handleSensorSettingsInput() {
           EEPROM.update(adresses[HUM_MAX], humidityMaxVal);
         }
 
+        while (Serial.available() > 0) {
+          Serial.read();
+        }
+
         currentState = SENSOR_SETTINGS;
         sensorSettingsPrinted = false;
         break;
@@ -536,7 +555,6 @@ void handleSensorSettingsInput() {
 
 void handleResetLoggerInput() {
   if (Serial.available() > 0) {
-    Serial.flush();
     userInput = Serial.parseInt();
     // Clear the remaining characters in the serial buffer
     while (Serial.available() > 0) {
@@ -548,6 +566,7 @@ void handleResetLoggerInput() {
         eraseLoggerData();
         currentState = MAIN_MENU;
         resetLoggerPrinted = false;
+        mainMenuPrinted = false;
         break;
       case 2:
         currentState = MAIN_MENU;  //go back if the user enters "NO"
@@ -564,7 +583,6 @@ void handleResetLoggerInput() {
 
 void handleSystemStatusInput() {
   if (Serial.available() > 0) {
-    Serial.flush();
     userInput = Serial.parseInt();
     // Clear the remaining characters in the serial buffer
     while (Serial.available() > 0) {
@@ -627,24 +645,26 @@ void handleRGBLEDControlInput() {
     inputHasBeenRead = true;
   }
   if (inputHasBeenRead == true) {
-    Serial.flush();
+    while (Serial.available() > 0) {
+      Serial.read();
+    }
     switch (userInput) {
       case 1:
         // Manual color control
-        inputSucceded = true;
-        startTime = millis();
-        while (millis() - startTime < timeoutDuration) {
-          if (Serial.available() > 0) {
-            // User input is available, read it
-            value1 = Serial.parseInt();
-            // Clear the remaining characters in the serial buffer
-            while (Serial.available() > 0) {
-              Serial.read();
-            }
-            break;  // Exit the loop once input is received
-          }
-        }
+        
+
         Serial.println(F("Enter R value: "));
+        while (!Serial.available()) {
+          // Wait for user input
+        }
+        inputSucceded = true;
+        if (Serial.available() > 0) {
+          value1 = Serial.parseInt();
+        }
+
+        while (Serial.available() > 0) {
+          Serial.read();
+        }
 
         if (!isLEDValidValue(value1)) {
           Serial.println(F("Error: Value 1 is out of range (0-255)"));
@@ -654,19 +674,18 @@ void handleRGBLEDControlInput() {
           inputHasBeenRead = false;
           return;
         }
+
         Serial.println(F("Enter G value: "));
-        startTime = millis();
-        while (millis() - startTime < timeoutDuration) {
-          if (Serial.available() > 0) {
-            // User input is available, read it
-            value2 = Serial.parseInt();
-            // Clear the remaining characters in the serial buffer
-            while (Serial.available() > 0) {
-              Serial.read();
-            }
-            break;  // Exit the loop once input is received
-          }
+
+        while (!Serial.available()) {
+          // Wait for user input
         }
+
+        if (Serial.available() > 0) {
+          value2 = Serial.parseInt();
+        }
+        inputSucceded = true;
+
         if (!isLEDValidValue(value2)) {
           Serial.println(F("Error: Value 2 is out of range (0-255)"));
           inputSucceded = false;
@@ -675,19 +694,22 @@ void handleRGBLEDControlInput() {
           inputHasBeenRead = false;
           return;
         }
-        Serial.println(F("Enter B value: "));
-        startTime = millis();
-        while (millis() - startTime < timeoutDuration) {
-          if (Serial.available() > 0) {
-            // User input is available, read it
-            value3 = Serial.parseInt();
-            // Clear the remaining characters in the serial buffer
-            while (Serial.available() > 0) {
-              Serial.read();
-            }
-            break;  // Exit the loop once input is received
-          }
+        while (Serial.available() > 0) {
+          Serial.read();
         }
+
+        Serial.println(F("Enter B value: "));
+
+        while (!Serial.available()) {
+          // Wait for user input
+        }
+        inputSucceded = true;
+
+        if (Serial.available() > 0) {
+          value3 = Serial.parseInt();
+        }
+
+
         if (!isLEDValidValue(value3)) {
           Serial.println(F("Error: Value 3 is out of range (0-255)"));
           inputSucceded = false;
@@ -707,8 +729,11 @@ void handleRGBLEDControlInput() {
           EEPROM.update(adresses[LED_G_VAL], ledValues[ledGIndex]);
           EEPROM.update(adresses[LED_B_VAL], ledValues[ledBIndex]);
           EEPROM.update(adresses[LED_MODE], ledAutoMode);
+          inputHasBeenRead = false;
         }
-
+        while (Serial.available() > 0) {
+          Serial.read();
+        }
 
         currentState = RGB_LED_CONTROL;
         rgbLedControlPrinted = false;
@@ -716,18 +741,23 @@ void handleRGBLEDControlInput() {
 
       case 2:
         ledAutoMode = !ledAutoMode;
+        EEPROM.update(adresses[LED_MODE], ledAutoMode);
         Serial.println("Automatic LED control toggled " + String(ledAutoMode));
-        currentState = RGB_LED_CONTROL;
+        currentState = MAIN_MENU;
+        mainMenuPrinted = false;
         rgbLedControlPrinted = false;
+        inputHasBeenRead = false;
         break;
       case 3:
         currentState = MAIN_MENU;  // Go back
         mainMenuPrinted = false;
+        inputHasBeenRead = false;
         break;
       default:
         Serial.println(F("Incorrect choice."));
         currentState = RGB_LED_CONTROL;
         rgbLedControlPrinted = false;
+        inputHasBeenRead = false;
         break;
     }
   }
