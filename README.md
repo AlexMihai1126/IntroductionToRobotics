@@ -63,4 +63,4 @@ Video of the setup: https://youtu.be/LGYc3vCyYwg
 
 ## Homework 6
 
-Image of the setup: ![](https://github.com/AlexMihai1126/IntroductionToRobotics/blob/main/Homework%206/20231128_104707003_iOS.heic)
+Image of the setup: ![](https://github.com/AlexMihai1126/IntroductionToRobotics/blob/main/Homework%206/20231128_104707003_iOS.jpg)
