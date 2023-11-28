@@ -60,3 +60,7 @@ The code file is in the folder "Homework 5/hw5_code2". Please note that the firs
 Image of the setup: ![](https://github.com/AlexMihai1126/IntroductionToRobotics/blob/main/Homework%205/image/20231120_200857510_iOS.jpg)
 
 Video of the setup: https://youtu.be/LGYc3vCyYwg
+
+## Homework 6
+
+Image of the setup: ![](https://github.com/AlexMihai1126/IntroductionToRobotics/blob/main/Homework%206/20231128_104707003_iOS.heic)
