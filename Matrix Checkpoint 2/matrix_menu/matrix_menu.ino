@@ -157,6 +157,38 @@ highscore hs3;
 LiquidCrystal lcd(displayRS, displayEN, displayD4, displayD5, displayD6, displayD7);
 LedControl matrix = LedControl(matrixDIN, matrixCLK, matrixCS, 2);
 
+void setup() {
+  lcd.begin(16, 2);
+  lcd.clear();
+  lcd.print("STARTING UP...");
+  pinMode(buzzerPin, OUTPUT);
+  pinMode(redPushbtn, INPUT_PULLUP);
+  pinMode(joystickX, INPUT);
+  pinMode(joystickY, INPUT);
+  pinMode(ambientLightSensor, INPUT);
+  pinMode(displayBacklight, OUTPUT);
+  Serial.begin(9600);
+  loadParameters();
+  loadHighscores();
+  analogWrite(displayBacklight, lcdBrightness);
+  matrix.shutdown(0, false);
+  matrix.setIntensity(0, matrixBrightness);
+  matrix.clearDisplay(0);
+  matrix.shutdown(1, false);
+  matrix.setIntensity(1, matrixBrightness);
+  matrix.clearDisplay(1);
+  randomSeed(analogRead(A5));
+  currentState = intro;  //switch to intro state after the setup runs
+}
+
+void loop() {
+  getJoystickState();
+  if (!isInGame) {
+    handleMenuNavigation();
+    handleMenu();
+  }
+}
+
 void loadParameters() {
   matrixBrightness = EEPROM.read(adresses[mtxBright]);
   lcdBrightness = EEPROM.read(adresses[lcdBright]);
@@ -189,28 +221,28 @@ void autoBrightnessController() {
 void getJoystickState() {
   xValue = analogRead(joystickX);
   yValue = analogRead(joystickY);
-  if(joystickMoved == false){
+  if (joystickMoved == false) {
     if (xValue > maxThreshold) {
-    joyState = UP;
-    joystickMoved = true;
+      joyState = UP;
+      joystickMoved = true;
+    }
+
+    if (xValue < minThreshold) {
+      joyState = DOWN;
+      joystickMoved = true;
+    }
+
+    if (yValue > maxThreshold) {
+      joyState = RIGHT;
+      joystickMoved = true;
+    }
+
+    if (yValue < minThreshold) {
+      joyState = LEFT;
+      joystickMoved = true;
+    }
   }
 
-  if (xValue < minThreshold) {
-    joyState = DOWN;
-    joystickMoved = true;
-  }
-
-  if (yValue > maxThreshold) {
-    joyState = RIGHT;
-    joystickMoved = true;
-  }
-
-  if (yValue < minThreshold) {
-    joyState = LEFT;
-    joystickMoved = true;
-  }
-  }
-  
 
   if (xValue >= minThreshold && xValue < maxThreshold && yValue >= minThreshold && yValue < maxThreshold) {
     joyState = STATIC;
@@ -238,62 +270,32 @@ void getJoySwitchState() {
   joySwStateLastReading = joySwReading;
 }
 
-
-void setup() {
-  pinMode(buzzerPin, OUTPUT);
-  pinMode(redPushbtn, INPUT_PULLUP);
-  pinMode(joystickX, INPUT);
-  pinMode(joystickY, INPUT);
-  pinMode(ambientLightSensor, INPUT);
-  pinMode(displayBacklight, OUTPUT);
-  lcd.begin(16, 2);
-  Serial.begin(9600);
-  loadParameters();
-  loadHighscores();
-  analogWrite(displayBacklight, lcdBrightness);
-  matrix.shutdown(0, false);
-  matrix.setIntensity(0, matrixBrightness);
-  matrix.clearDisplay(0);
-  matrix.shutdown(1, false);
-  matrix.setIntensity(1, matrixBrightness);
-  matrix.clearDisplay(1);
-  randomSeed(analogRead(A5));
-  currentState = intro;  //switch to intro state after the setup runs
-}
-
-void loop() {
-  getJoystickState();
-  if (!isInGame) {
-    handleMenuNavigation();
-    handleMenu();
-  }
-}
-
 void handleMenu() {
-  if(currentState != previousState){
+  if (currentState != previousState) {
     lcd.clear();
+    lcd.setCursor(0, 0);
     switch (currentState) {
-    case intro:
-      handleIntro();
-      break;
-    case startGame:
-      handleStartGame();
-      break;
-    case highscores:
-      handleHighscores();
-      break;
-    case settings:
-      handleSettings();
-      break;
-    case about:
-      handleAbout();
-      break;
-    case tutorial:
-      handleTutorial();
-      break;
-    default:
-      break;
-  }
+      case intro:
+        handleIntro();
+        break;
+      case startGame:
+        handleStartGame();
+        break;
+      case highscores:
+        handleHighscores();
+        break;
+      case settings:
+        handleSettings();
+        break;
+      case about:
+        handleAbout();
+        break;
+      case tutorial:
+        handleTutorial();
+        break;
+      default:
+        break;
+    }
   }
   previousState = currentState;
 }
@@ -304,30 +306,30 @@ void handleIntro() {
 
 void handleStartGame() {
   lcd.print("START GAME:");
-  delay(100);
+  delay(500);
   lcd.setCursor(0, 0);
   lcd.print("Press the RED");
-  lcd.setCursor(1, 0);
+  lcd.setCursor(0, 1);
   lcd.print("button to start");
 }
 
 void handleHighscores() {
   lcd.print("View highscores");
-  lcd.setCursor(1, 0);
+  lcd.setCursor(0, 1);
   lcd.print("Press joystick");
   //on joystick press will enter a function that will display all highscores, one at a time, for 3 sec each, then go back to main menu;
 }
 
 void handleSettings() {
   lcd.print("SETTINGS");
-  lcd.setCursor(1, 0);
+  lcd.setCursor(0, 1);
   lcd.print("Press joystick");
   //on click will move to inSubmenu state then handleSettingsSubmenus() will be called
 }
 
 void handleAbout() {
   lcd.print("About the game");
-  lcd.print("Created by Alexandru Mihai");  //will scroll
+  lcd.print("Created by Alexandru Mihai");  //will scroll sometime
   lcd.print("GitHub: AlexMihai1126");
 }
 
@@ -349,23 +351,19 @@ void handleMenuNavigation() {
 }
 
 void navigateMenuUp() {
-  if(cmdExecuted == false){
-      cmdExecuted = true;
-      if (currentState > 0) {
-    currentState = static_cast<mainMenuStates>(currentState - 1);
-  } else {
-    currentState = static_cast<mainMenuStates>(maxAccesibleMenuStates - 1);
+  if (cmdExecuted == false) {
+    cmdExecuted = true;
+    if (currentState > 0) {
+      currentState = static_cast<mainMenuStates>(currentState - 1);
+    } else {
+      currentState = static_cast<mainMenuStates>(maxAccesibleMenuStates - 1);
+    }
   }
-
-  }
-
 }
 
 void navigateMenuDown() {
-  if(cmdExecuted == false){
+  if (cmdExecuted == false) {
     cmdExecuted = true;
-  currentState = static_cast<mainMenuStates>((currentState + 1) % maxAccesibleMenuStates);
+    currentState = static_cast<mainMenuStates>((currentState + 1) % maxAccesibleMenuStates);
   }
 }
-
-
