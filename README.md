@@ -61,6 +61,11 @@ Image of the setup: ![](https://github.com/AlexMihai1126/IntroductionToRobotics/
 
 Video of the setup: https://youtu.be/LGYc3vCyYwg
 
-## Homework 6
+## Homework 6 (Matrix checkpoint 1)
 
 Image of the setup: ![](https://github.com/AlexMihai1126/IntroductionToRobotics/blob/main/Homework%206/20231128_104707003_iOS.jpg)
+
+## Homework 7 (Matrix checkpoint 2)
+Task was to implement the menu of the matrix game project.
+
+Image: 
