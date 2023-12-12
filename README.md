@@ -68,4 +68,4 @@ Image of the setup: ![](https://github.com/AlexMihai1126/IntroductionToRobotics/
 ## Homework 7 (Matrix checkpoint 2)
 Task was to implement the menu of the matrix game project.
 
-Image: ![]()
+Image: 
