@@ -160,17 +160,17 @@ LedControl matrix = LedControl(matrixDIN, matrixCLK, matrixCS, 2);
 void setup() {
   lcd.begin(16, 2);
   lcd.clear();
-  lcd.print("STARTING UP...");
   pinMode(buzzerPin, OUTPUT);
   pinMode(redPushbtn, INPUT_PULLUP);
+  pinMode(joystickSw, INPUT_PULLUP);
   pinMode(joystickX, INPUT);
   pinMode(joystickY, INPUT);
   pinMode(ambientLightSensor, INPUT);
   pinMode(displayBacklight, OUTPUT);
-  Serial.begin(9600);
+  analogWrite(displayBacklight, lcdBrightness);
+  lcd.print("STARTING UP...");
   loadParameters();
   loadHighscores();
-  analogWrite(displayBacklight, lcdBrightness);
   matrix.shutdown(0, false);
   matrix.setIntensity(0, matrixBrightness);
   matrix.clearDisplay(0);
@@ -179,6 +179,7 @@ void setup() {
   matrix.clearDisplay(1);
   randomSeed(analogRead(A5));
   currentState = intro;  //switch to intro state after the setup runs
+  Serial.begin(9600);
 }
 
 void loop() {
@@ -215,7 +216,9 @@ void displayMatrix() {
 }
 
 void autoBrightnessController() {
-  //todo
+  if (autoBrightness == true) {
+    //todo
+  }
 }
 
 void getJoystickState() {
