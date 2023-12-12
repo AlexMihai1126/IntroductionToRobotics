@@ -26,10 +26,11 @@
 #define maxAccesibleMenuStates 5
 #define maxAccesibleInternalMenus 2
 #define maxAccesibleSettingsSubmenus 5
+#define matrixTop 1
+#define matrixBottom 0
 
 byte logicalMatrix[matrixRows][matrixColumns] = {
   { 0, 0, 0, 0, 0, 0, 0, 0 },
-  { 0, 1, 0, 0, 0, 0, 0, 0 },
   { 0, 0, 0, 0, 0, 0, 0, 0 },
   { 0, 0, 0, 0, 0, 0, 0, 0 },
   { 0, 0, 0, 0, 0, 0, 0, 0 },
@@ -42,7 +43,8 @@ byte logicalMatrix[matrixRows][matrixColumns] = {
   { 0, 0, 0, 0, 0, 0, 0, 0 },
   { 0, 0, 0, 0, 0, 0, 0, 0 },
   { 0, 0, 0, 0, 0, 0, 0, 0 },
-  { 0, 1, 0, 0, 0, 0, 0, 0 },
+  { 0, 0, 0, 0, 0, 0, 0, 0 },
+  { 0, 0, 0, 0, 0, 0, 0, 0 },
   { 0, 0, 0, 0, 0, 0, 0, 0 }
 };
 
@@ -87,11 +89,12 @@ enum settingsSubmenus {
 settingsSubmenus currentSettingsSubmenu = inMainMenu;
 
 enum gameLevels {
-  practice,
   easy,
   normal,
   hard
 };
+
+gameLevels currentLevel = easy;
 
 enum storedParameters {
   mtxBright,
@@ -111,7 +114,6 @@ enum joystickState {
 };
 
 joystickState joyState = STATIC;
-joystickState lastJoyState = STATIC;
 
 struct highscore {
   char name[maxCharsName] = "";
@@ -183,6 +185,7 @@ void setup() {
 }
 
 void loop() {
+  displayMatrix();
   getJoystickState();
   if (!isInGame) {
     handleMenuNavigation();
@@ -209,8 +212,8 @@ void loadHighscores() {
 void displayMatrix() {
   for (int row = 0; row < matrixRows; row++) {
     for (int col = 0; col < matrixColumns; col++) {
-      matrix.setLed(1, 15 - row, 7 - col, logicalMatrix[row][col]);
-      matrix.setLed(0, 15 - row, 7 - col, logicalMatrix[row][col]);  // Update each LED state
+      matrix.setLed(matrixTop, row, col, logicalMatrix[row][col]);
+      matrix.setLed(matrixBottom, row, col, logicalMatrix[row][col]); //problem with the indexes
     }
   }
 }
@@ -303,17 +306,29 @@ void handleMenu() {
   previousState = currentState;
 }
 
+void generateAutoscrollingText(const char text[], short lineToDisplay){
+  int textLength = strlen(text);
+  int displayLength = 16;
+  for (int i = 0; i < textLength - displayLength + 1; i++) {
+    lcd.setCursor(0, lineToDisplay);
+    lcd.print(text + i);
+    delay(150);
+  }
+}
+
 void handleIntro() {
-  lcd.print("Welcome!");
+  if(introHasAppeared == false){
+    lcd.print("Welcome!");
+    introHasAppeared = true;
+    currentState = startGame;
+    delay(1000); //only for test purposes will be removed in the project
+    handleMenu();
+  }
 }
 
 void handleStartGame() {
-  lcd.print("START GAME:");
-  delay(500);
-  lcd.setCursor(0, 0);
-  lcd.print("Press the RED");
-  lcd.setCursor(0, 1);
-  lcd.print("button to start");
+  lcd.print("Start game:");
+  generateAutoscrollingText("Press the RED button to start!",1);
 }
 
 void handleHighscores() {
@@ -332,12 +347,15 @@ void handleSettings() {
 
 void handleAbout() {
   lcd.print("About the game");
-  lcd.print("Created by Alexandru Mihai");  //will scroll sometime
-  lcd.print("GitHub: AlexMihai1126");
+  delay(500);
+  generateAutoscrollingText("Created by Alexandru Mihai",1);
+  delay(500);
+  generateAutoscrollingText("GitHub: AlexMihai1126",1);
 }
 
 void handleTutorial() {
   lcd.print("Tutorial:");
+  generateAutoscrollingText("Game idea not finalized", 1);
 }
 
 void handleMenuNavigation() {
