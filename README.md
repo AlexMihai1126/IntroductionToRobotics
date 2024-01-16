@@ -47,7 +47,7 @@ How it should operate: "The initial position should be on the DP. The current po
 <details>
 <summary>How the segments move</summary>
   
-Image: ![](https://github.com/AlexMihai1126/IntroductionToRobotics/blob/main/Homework%203/images/Screenshot%202023-11-05%20204835.png)
+![](https://github.com/AlexMihai1126/IntroductionToRobotics/blob/main/Homework%203/images/Screenshot%202023-11-05%20204835.png)
 </details>
  
 <br>
