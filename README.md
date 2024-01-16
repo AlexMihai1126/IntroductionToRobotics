@@ -44,7 +44,11 @@ Task: "You will use the joystick to control the position ofthe segment and ”dr
 How it should operate: "The initial position should be on the DP. The current position always blinks (irrespective of the fact that the segment is on or off). Use the joystick to move from one position to neighbors (see table for corresponding movement). Short pressing the button toggles the segment state from ON to OFF or from OFF to ON. Long pressing the button resets the entire display by turning all the segments OFF and moving the current position to the decimal point."
 <br>
 
-How the segments move: ![](https://github.com/AlexMihai1126/IntroductionToRobotics/blob/main/Homework%203/images/Screenshot%202023-11-05%20204835.png)
+<details>
+  <summary>How the segments move</summary>
+  ![](https://github.com/AlexMihai1126/IntroductionToRobotics/blob/main/Homework%203/images/Screenshot%202023-11-05%20204835.png)
+</details>
+ 
 <br>
 
 Components used: one 7-segment display, one red LED, 9 330 ohm resistors for each LED (the 8 in the display and the additional LED), joystick, breadboard and the necessary wires
