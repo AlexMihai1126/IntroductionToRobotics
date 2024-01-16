@@ -72,6 +72,7 @@ Notes: an extra red LED was used to let the user know if the current segment has
 Task given was to implement a stopwatch just like the app on a phone using an Arduino. It counts with a precision of tenths of a second. It starts at 000.0, pressing the start button (1st button) begins the timer. Pressing the 2nd button saves a lap (the current time at the moment the button was pressed) and saves up to 4 values, overwriting them when we reach the limit. The reset button (3rd button) puts the time back at 000.0. The start/stop button and lap button use interrupts for added measuring precision. At 999.9 the timer will go back to 000.0 and start again automatically. It should also allow the user to view the laps after the timer has been reset manually, and pressing the reset button while in the lap view mode should erase the laps and start over (not working on my setup however).
 <br>
 
+
 Components used: 4-digit 7-segment display, 8x 330 ohm resistors for each of the LEDs, 3 pushbuttons and a 74HC595 shift register, along with a breadboard and necessary wires.
 <br>
 
@@ -88,6 +89,7 @@ Video of the setup: https://youtu.be/aYq58uCmPIw
 <summary>Homework 5</summary>
 Task given was to implement a data logger and monitor for a few sensors (distance, light, and bonus temperature and humidity) and control an RGB LED (if it's set to Auto it's green if all sensors are within the set ranges, but turns red if any of the sensors are out of range and of set to Manual you can set the desired color via 3 parameters (Red,Green and Blue). All configuration data is stored in the EEPROM of the Arduino. You can configure the update rate of the sensors (in seconds), the maximum threshold (in my implementation) of the sensors and the LED mode.
 <br>
+
 
 Components used: Ultrasonic distance sensor (1x), photocell (1x) along with a 10K resistor for it, an RGB LED (and 1x 330 ohm resistors for each of the channels - for a total of 3) and a combined temperature/humidity sensor I had from a previous project (DHT11).
 <br>
